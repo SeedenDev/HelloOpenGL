@@ -2,6 +2,11 @@
 #include <fstream>
 #include <string>
 
+#include "Shader.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -52,43 +57,6 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 // ----
-
-static std::string ReadFileAsString(const std::string& filepath)
-{
-    // C++ way of reading file, on the basis of how to do it with the C API (could be a little bit quicker)
-    std::ifstream stream(filepath);
-    std::string contents;
-    stream.seekg(0, std::ios::end);
-    contents.resize(stream.tellg());
-    stream.seekg(0, std::ios::beg);
-    stream.read(&contents[0], contents.size());
-    stream.close();
-    return contents;
-}
-
-static unsigned int CreateShader(const GLenum shaderType, const std::string& filepath)
-{
-    std::string fileStr = ReadFileAsString(filepath);
-    const char* shaderSrc = fileStr.c_str();
-    unsigned int shader = glCreateShader(shaderType);
-    glShaderSource(shader, 1, &shaderSrc, NULL);
-    glCompileShader(shader);
-
-    /* Error checking */
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        int length;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        char* log = (char*) alloca(length*sizeof(char));
-        glGetShaderInfoLog(shader, length, NULL, log);
-        std::cout << "ERROR::SHADER::"<< (shaderType==GL_VERTEX_SHADER?"VERTEX":"FRAGMENT") << "::COMPILATION_FAILED\n" << log << std::endl;
-        glDeleteShader(shader);
-        return 0;
-    }
-    return shader;
-}
 
 int main(void)
 {
@@ -151,22 +119,16 @@ int main(void)
         2, 3, 0
     };
 
-    unsigned int vbo, vao, ibo;
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ibo);
-    glGenVertexArrays(1, &vao);
-    // Bind the VAO and now everything that follows will be in this VAO
-    glBindVertexArray(vao);
+    VertexArray vao;
+    vao.Bind();
+    VertexBuffer vbo(vertices);
+    IndexBuffer ibo(indices);    
 
-    // Put the data in the VBO
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // Put the data in the IBO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //TODO: Load VBO & IBO in VAO
+    // Mhm how, the buffer data should be set while VAO is bind otherwise they won't be linked.. So VAO should be bind before
+    // creating VBO & IBO objects?
 
-    // Setup the vertex attributes
-
+    // Setup the vertex attributes (TODO: VAO object method)
     // Position
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -174,33 +136,15 @@ int main(void)
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (2*sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    glBindVertexArray(0); //not necessary BUT note that I should not unbind the VBO & IBO before the VAO, otherwise they won't be included in it
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+    vao.Unbind();
+    vbo.Unbind();
+    ibo.Unbind();
 
     /* Shaders */
-    unsigned int vertexShader = CreateShader(GL_VERTEX_SHADER, "assets/shaders/vertex.glsl");
-    unsigned int fragShader = CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/fragment.glsl");
-
-    /* Shader program */
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragShader);
-    glLinkProgram(shaderProgram);
-
-    int success;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        char infoLog[512];
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragShader);
-
-    const int timeLocation = glGetUniformLocation(shaderProgram, "u_Time");
+	Shader shaderProgram("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
+	shaderProgram.Bind();
+    const int timeLocation = shaderProgram.GetUniformLocation("u_Time");
+	shaderProgram.Unbind();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -232,14 +176,16 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Use our shaders
-        glUseProgram(shaderProgram);
 
+		shaderProgram.Bind();
         glUniform1f(timeLocation, glfwGetTime());
 
-        glBindVertexArray(vao);
+        vao.Bind();
         //glDrawArrays(GL_TRIANGLES, 0, 6);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        vao.Unbind();
+
+		shaderProgram.Unbind();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -247,8 +193,6 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
-
-    glDeleteProgram(shaderProgram);
 
     glfwTerminate();
 }

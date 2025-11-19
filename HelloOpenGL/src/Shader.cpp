@@ -13,7 +13,7 @@ Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentS
     glDeleteShader(vertexShader);
     glDeleteShader(fragShader);
 
-	//TODO: better error handling (including how to notice the failure in the constructor)
+	//TODO: better error handling (including how to notice the failure from where it has been called)
     int success;
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success)
@@ -21,15 +21,21 @@ Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentS
         char infoLog[512];
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-        m_RendererID = -1;
+        m_RendererID = 0;
         return;
     }
+
     m_RendererID = shaderProgram;
 }
 
 Shader::~Shader()
 {
     glDeleteProgram(m_RendererID);
+}
+
+int Shader::GetUniformLocation(const char* name) const
+{
+    return glGetUniformLocation(m_RendererID, name);
 }
 
 void Shader::Bind() const
@@ -40,9 +46,4 @@ void Shader::Bind() const
 void Shader::Unbind() const
 {
     glUseProgram(0);
-}
-
-int Shader::GetUniformLocation(const char* name) const
-{
-    return glGetUniformLocation(m_RendererID, name);
 }

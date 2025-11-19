@@ -1,5 +1,6 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
 #include <string>
 
 #include "Shader.h"
@@ -7,9 +8,7 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
+//TODO: maybe move in GLUtil.h
 // From https://learnopengl.com/In-Practice/Debugging
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam)
 {
@@ -106,7 +105,10 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    /* VBO(vertices), IBO(indices) & VAO(attributes + VBO/IBO) setup */
+
+    //TODO: everything below in a Renderer class
+
+    /* VBO(vertices), IBO(indices) & VAO(attributes + VBO/IBO) + Shader setup */
     float vertices[] = {
        // pos      // color
        -0.5, -0.5, 0.0, 0.0, 1.0, // 0 (bottom-left)
@@ -120,31 +122,20 @@ int main(void)
     };
 
     VertexArray vao;
-    vao.Bind();
-    VertexBuffer vbo(vertices);
-    IndexBuffer ibo(indices);    
+    VertexBuffer vbo(vertices, sizeof(vertices));
+    IndexBuffer ibo(indices, sizeof(indices));
 
-    //TODO: Load VBO & IBO in VAO
-    // Mhm how, the buffer data should be set while VAO is bind otherwise they won't be linked.. So VAO should be bind before
-    // creating VBO & IBO objects?
-
-    // Setup the vertex attributes (TODO: VAO object method)
-    // Position
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // Color
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (2*sizeof(float)));
-    glEnableVertexAttribArray(1);
+    VertexLayout vLayout;
+    vLayout.addAttribute(GL_FLOAT, 2, GL_FALSE);
+    vLayout.addAttribute(GL_FLOAT, 3, GL_FALSE);
+    vao.ApplyLayout(vbo, vLayout);
 
     vao.Unbind();
     vbo.Unbind();
     ibo.Unbind();
 
-    /* Shaders */
 	Shader shaderProgram("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
-	shaderProgram.Bind();
     const int timeLocation = shaderProgram.GetUniformLocation("u_Time");
-	shaderProgram.Unbind();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -184,7 +175,6 @@ int main(void)
         //glDrawArrays(GL_TRIANGLES, 0, 6);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         vao.Unbind();
-
 		shaderProgram.Unbind();
 
         /* Swap front and back buffers */

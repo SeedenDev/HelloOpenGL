@@ -1,0 +1,75 @@
+#include "ApplicationWindow.h"
+
+#include <iostream>
+#include "GLUtil.h"
+
+ApplicationWindow::ApplicationWindow(const std::string& title, int width, int height)
+    : m_Width(width), m_Height(height), m_DefaultRatio((float) width / (float) height)
+{
+    GLFWwindow* window;
+
+    if (!glfwInit())
+        return;
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+
+    /* Create a windowed mode window and its OpenGL context */
+    window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+    if (!window)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(m_Vsync); 
+
+    if (glewInit() != GLEW_OK)
+    {
+        std::cout << "Failed to init GLEW" << std::endl;
+        return;
+    }
+
+#ifdef _DEBUG
+    int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+    {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(GLUtil::DebugMessageCallback, nullptr); // available only since opengl 4.3 but seems to work in 3.3
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
+#endif
+
+    glfwSetWindowUserPointer(window, this);
+
+    // Have to do this because GLFW is a C API lib = objects don't exist. Solutions: 1) have a function calling your method 2) this kind of lambda
+    auto frameBufferCallback = [](GLFWwindow* window, int width, int height)
+        {
+            ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+            appWindow->FramebufferSizeCallback(window, width, height);
+        };
+    glfwSetFramebufferSizeCallback(window, frameBufferCallback);
+
+    m_Window = window;
+}
+
+ApplicationWindow::~ApplicationWindow()
+{
+    glfwTerminate();
+}
+
+// private
+
+void ApplicationWindow::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+    m_Width = width;
+    m_Height = height;
+}

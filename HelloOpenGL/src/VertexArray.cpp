@@ -20,10 +20,10 @@ void VertexArray::ApplyLayout(VertexBuffer& vbo, VertexLayout& vLayout)
 	vbo.Bind();
 	const auto& elements = vLayout.GetElements();
 	unsigned int offset = 0;
-	for (int i = 0; i < elements.size(); i++)
+	for (unsigned int i = 0; i < elements.size(); i++)
 	{
 		LayoutAttribute attr = vLayout.GetElements()[i];
-		glVertexAttribPointer(i, attr.count, attr.type, attr.normalized, vLayout.getStride(), (void*) offset);
+		glVertexAttribPointer(i, attr.count, attr.type, attr.normalized, vLayout.GetStride(), (void*) offset);
 		glEnableVertexAttribArray(i);
 		offset += attr.count * GLUtil::GetSizeOfGLType(attr.type);
 	}

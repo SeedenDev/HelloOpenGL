@@ -17,7 +17,7 @@ Renderer::~Renderer()
 
 void Renderer::SetVertices(float* vertices, unsigned int size)
 {
-
+	
 }
 
 void Renderer::SetIndices(unsigned int* indices, unsigned int count)

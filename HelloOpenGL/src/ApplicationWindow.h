@@ -14,9 +14,14 @@ private:
 	float m_DefaultRatio; //TODO: implement framebuffer screen ratio to avoid distording render after resizing
 	bool m_Vsync = 1; // = VSYNC ON by default (monitor refresh rate = fps) - Better to be on (otherwise my gpu explodes lmao)
 
+	//TODO: Move to Camera.cpp
+	double m_LastMouseX, m_LastMouseY;
+
 public:
 	ApplicationWindow(const std::string& title, int width, int height);
 	~ApplicationWindow();
+
+	void HandleKeyInput();
 
 	//NOTE: is it bad to have these getters/setters inside the header?
 	void ToggleVsync()
@@ -40,4 +45,5 @@ public:
 private:
 
 	void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
+	void MousePosCallback(GLFWwindow* window, double mouseX, double mouseY);
 };

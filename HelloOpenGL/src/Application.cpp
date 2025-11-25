@@ -72,6 +72,9 @@ int main(void)
             appWindow.SetTitle(windowTitle);
             lastTime = currentTime;
 
+            /* Key input */
+            appWindow.HandleKeyInput();
+
             /* Render */
             glClear(GL_COLOR_BUFFER_BIT);
 

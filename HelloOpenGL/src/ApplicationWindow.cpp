@@ -4,7 +4,7 @@
 #include "GLUtil.h"
 
 ApplicationWindow::ApplicationWindow(const std::string& title, int width, int height)
-    : m_Width(width), m_Height(height), m_DefaultRatio((float) width / (float) height)
+    : m_Width(width), m_Height(height), m_DefaultRatio((float) width / (float) height), m_LastMouseX(width/2), m_LastMouseY(height/2)
 {
     GLFWwindow* window;
 
@@ -57,12 +57,29 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
         };
     glfwSetFramebufferSizeCallback(window, frameBufferCallback);
 
+    // Tell GLFW to hide the cursor and capture it once focused
+    //NOTE: glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+
+    auto cursorPosCallback = [](GLFWwindow* window, double mouseX, double mouseY)
+        {
+            ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+            appWindow->MousePosCallback(window, mouseX, mouseY);
+        };
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+
     m_Window = window;
 }
 
 ApplicationWindow::~ApplicationWindow()
 {
     glfwTerminate();
+}
+
+void ApplicationWindow::HandleKeyInput()
+{
+    //TODO: change with a util isKeyPressed(GLFW_KEY_)
+    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(m_Window, true);
 }
 
 // private
@@ -72,4 +89,14 @@ void ApplicationWindow::FramebufferSizeCallback(GLFWwindow* window, int width, i
     glViewport(0, 0, width, height);
     m_Width = width;
     m_Height = height;
+}
+
+void ApplicationWindow::MousePosCallback(GLFWwindow* window, double mouseX, double mouseY)
+{
+    double offsetX = mouseX - m_LastMouseX;
+    double offsetY = m_LastMouseY - mouseY;
+    m_LastMouseX = mouseX;
+    m_LastMouseY = mouseY;
+
+    //NOTE: send to Camera#rotate?
 }

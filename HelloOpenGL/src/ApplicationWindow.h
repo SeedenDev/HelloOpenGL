@@ -6,8 +6,6 @@
 
 class ApplicationWindow
 {
-	//TODO: listens to events to callback them (key event, mouse?)
-
 private:
 	GLFWwindow* m_Window = nullptr; //TODO: maybe unique_ptr ?
 	int m_Width, m_Height;

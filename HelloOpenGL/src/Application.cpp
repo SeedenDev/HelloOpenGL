@@ -3,11 +3,15 @@
 #include <iostream>
 #include <string>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image/stb_image.h>
+
 #include "ApplicationWindow.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
+#include "Texture.h"
 
 int main(void)
 {
@@ -19,16 +23,20 @@ int main(void)
 
     /* VBO(vertices), IBO(indices) & VAO(attributes + VBO/IBO) + Shader setup */
     float vertices[] = {
-       // pos      // color
-       -0.5, -0.5, 0.0, 0.0, 1.0, // 0 (bottom-left)
-        0.5, -0.5, 0.0, 1.0, 0.0, // 1 (bottom-right)
-        0.5,  0.5, 1.0, 0.0, 0.0, // 2 (top-right)
-       -0.5,  0.5, 0.0, 0.0, 1.0  // 3 (top-left)
+       // pos      // color       // texture
+       -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 0.0, // 0 (bottom-left)
+        0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 0.0, // 1 (bottom-right)
+        0.5,  0.5, 1.0, 0.0, 0.0, 1.0, 1.0, // 2 (top-right)
+       -0.5,  0.5, 0.0, 0.0, 1.0, 0.0, 1.0  // 3 (top-left)
     };
     unsigned int indices[] = {
         0, 1, 2,
         2, 3, 0
     };
+
+    // Blending for alpha channels
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     VertexArray vao;
     VertexBuffer vbo(vertices, sizeof(vertices));
@@ -37,21 +45,33 @@ int main(void)
     VertexLayout vLayout;
     vLayout.AddAttr<float>(2);
     vLayout.AddAttr<float>(3);
+    vLayout.AddAttr<float>(2);
     vao.ApplyLayout(vbo, vLayout);
+
+    Shader shaderProgram("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
+    shaderProgram.Bind();
+
+    Texture texture1("assets/textures/test1.png");
+    texture1.Bind(1);
+    shaderProgram.SetUniform1i("u_Texture1", 1);
+
+    Texture texture0("assets/textures/test.png");
+    texture0.Bind(0);
+    shaderProgram.SetUniform1i("u_Texture0", 0);
 
     vao.Unbind();
     vbo.Unbind();
     ibo.Unbind();
-
-	Shader shaderProgram("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
+    shaderProgram.Unbind();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     double lastTime = glfwGetTime();
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
     double fpsLimit = 1.0 / 60.0;
-    bool unlimitedFPS = 1;
-    //appWindow.ToggleVsync();
+    bool unlimitedFPS = 0;
+    if (unlimitedFPS)
+        appWindow.ToggleVsync();
 
     while (!appWindow.ShouldClose())
     {
@@ -79,7 +99,7 @@ int main(void)
             glClear(GL_COLOR_BUFFER_BIT);
 
             shaderProgram.Bind();
-            shaderProgram.setUniform1f("u_Time", currentTime);
+            shaderProgram.SetUniform1f("u_Time", currentTime);
 
             vao.Bind();
             //glDrawArrays(GL_TRIANGLES, 0, 6);

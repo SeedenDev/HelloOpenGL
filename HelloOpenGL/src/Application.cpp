@@ -51,13 +51,14 @@ int main(void)
     Shader shaderProgram("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
     shaderProgram.Bind();
 
-    Texture texture1("assets/textures/test1.png");
-    texture1.Bind(1);
-    shaderProgram.SetUniform1i("u_Texture1", 1);
-
-    Texture texture0("assets/textures/test.png");
+    Texture texture0("assets/textures/test1.png");
+    Texture texture1("assets/textures/test2.png");
+    // Maybe for the RenderContext, link Texture&Slot and just keep the whole loaded textures in a list in the Renderer?
     texture0.Bind(0);
     shaderProgram.SetUniform1i("u_Texture0", 0);
+
+    texture1.Bind(1);
+    shaderProgram.SetUniform1i("u_Texture1", 1);
 
     vao.Unbind();
     vbo.Unbind();

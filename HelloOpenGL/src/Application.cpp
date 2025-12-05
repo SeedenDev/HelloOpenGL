@@ -69,9 +69,10 @@ int main(void)
 
     double lastTime = glfwGetTime();
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
-    double fpsLimit = 1.0 / 60.0;
+    double fpsCount = 60.0;
+    double fpsLimit = 1.0 / fpsCount;
     bool unlimitedFPS = 0;
-    if (unlimitedFPS)
+    if (unlimitedFPS || fpsCount!=60.0)
         appWindow.ToggleVsync();
 
     while (!appWindow.ShouldClose())

@@ -15,7 +15,7 @@ void main()
     vec4 lowerTex = texture(u_Texture0, vertexTex);
     vec4 upperTex = texture(u_Texture1, vertexTex);
     vec4 texColor = mix(lowerTex, upperTex, upperTex.a*0.5);
-    vec3 color = vertexColor.rgb;
+    vec4 color = texColor.rgba;
     color.r *= sin(u_Time)*cos(u_Time);
-    outColor = texColor;
+    outColor = color;
 }

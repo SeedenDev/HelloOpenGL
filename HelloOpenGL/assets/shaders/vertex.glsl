@@ -13,8 +13,8 @@ uniform float u_Time;
 void main()
 {
     vec4 newPos = pos;
-    /*newPos.x += sin(u_Time);
-    newPos.y *= cos(u_Time);*/
+    newPos.x += sin(u_Time);
+    newPos.y *= cos(u_Time);
     gl_Position = newPos;
     vertexPos = pos.xyz;
     vertexColor = color;

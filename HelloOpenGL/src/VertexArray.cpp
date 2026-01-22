@@ -27,6 +27,8 @@ void VertexArray::ApplyLayout(VertexBuffer& vbo, VertexLayout& vLayout)
 		glEnableVertexAttribArray(i);
 		offset += attr.count * GLUtil::GetSizeOfGLType(attr.type);
 	}
+	Unbind();
+	vbo.Unbind();
 }
 
 void VertexArray::Bind() const

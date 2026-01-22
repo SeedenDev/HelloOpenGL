@@ -2,9 +2,10 @@
 
 #include <iostream>
 #include "GLUtil.h"
+#include "Input.h"
 
 ApplicationWindow::ApplicationWindow(const std::string& title, int width, int height)
-    : m_Width(width), m_Height(height), m_DefaultRatio((float) width / (float) height), m_LastMouseX(width/2), m_LastMouseY(height/2)
+    : m_Width(width), m_Height(height), m_AspectRatio((float) width / (float) height)
 {
     GLFWwindow* window;
 
@@ -26,6 +27,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     }
 
     glfwMakeContextCurrent(window);
+    Input::SetWindowPointer(window);
 
     glfwSwapInterval(m_Vsync); 
 
@@ -47,6 +49,8 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     }
 #endif
 
+    glViewport(0, 0, width, height);
+
     glfwSetWindowUserPointer(window, this);
 
     // Have to do this because GLFW is a C API lib = objects don't exist. Solutions: 1) have a function calling your method 2) this kind of lambda
@@ -57,15 +61,26 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
         };
     glfwSetFramebufferSizeCallback(window, frameBufferCallback);
 
-    // Tell GLFW to hide the cursor and capture it once focused
-    //NOTE: glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
-
     auto cursorPosCallback = [](GLFWwindow* window, double mouseX, double mouseY)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->MousePosCallback(window, mouseX, mouseY);
         };
     glfwSetCursorPosCallback(window, cursorPosCallback);
+
+    auto scrollCallback = [](GLFWwindow* window, double xoffset, double yoffset)
+        {
+            ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+            appWindow->ScrollCallback(window, xoffset, yoffset);
+        };
+    glfwSetScrollCallback(window, scrollCallback);
+
+    auto mouseButtonCallback = [](GLFWwindow* window, int button, int action, int mods)
+        {
+            ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+            appWindow->MouseButtonCallback(window, button, action, mods);
+        };
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
     m_Window = window;
 }
@@ -75,28 +90,29 @@ ApplicationWindow::~ApplicationWindow()
     glfwTerminate();
 }
 
-void ApplicationWindow::HandleKeyInput()
+void ApplicationWindow::Update()
 {
-    //TODO: change with a util isKeyPressed(GLFW_KEY_)
-    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (Input::IsKeyPressed(GLFW_KEY_ESCAPE))
         glfwSetWindowShouldClose(m_Window, true);
 }
 
 // private
-
 void ApplicationWindow::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
-    m_Width = width;
-    m_Height = height;
+    Resize(width, height);
 }
 
 void ApplicationWindow::MousePosCallback(GLFWwindow* window, double mouseX, double mouseY)
 {
-    double offsetX = mouseX - m_LastMouseX;
-    double offsetY = m_LastMouseY - mouseY;
-    m_LastMouseX = mouseX;
-    m_LastMouseY = mouseY;
 
-    //NOTE: send to Camera#rotate?
+}
+
+void ApplicationWindow::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+
+}
+
+void ApplicationWindow::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+
 }

@@ -15,7 +15,7 @@ class VertexLayout
 {
 private:
 	std::vector<LayoutAttribute> m_Elements;
-	unsigned int m_Stride;
+	unsigned int m_Stride = 0;
 
 	void AddAttribute(GLenum type, GLint count, GLboolean normalized)
 	{

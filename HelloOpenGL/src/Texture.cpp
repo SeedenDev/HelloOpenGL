@@ -13,8 +13,10 @@ Texture::Texture(const std::string& texturePath)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_HandlerID);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // GL_NEAREST ; GL_NEAREST_MIPMAP_NEAREST ; GL_NEAREST_MIPMAP_LINEAR
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR); // GL_LINEAR ; GL_LINEAR_MIPMAP_LINEAR ; GL_LINEAR_MIPMAP_NEAREST
+	//TODO: a way to choose it for every texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // GL_NEAREST ; GL_NEAREST_MIPMAP_NEAREST ; GL_NEAREST_MIPMAP_LINEAR 
+																					// ; GL_LINEAR ; GL_LINEAR_MIPMAP_LINEAR ; GL_LINEAR_MIPMAP_NEAREST
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // only GL_NEAREST or GL_LINEAR
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // GL_REPEAT ; GL_MIRRORED_REPEAT ; GL_CLAMP_TO_EDGE
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -31,13 +33,15 @@ Texture::~Texture()
 	glDeleteTextures(1, &m_HandlerID);
 }
 
-void Texture::Bind(unsigned int slot) const
+void Texture::Bind(unsigned int slot)
 {
+	m_LastSlot = slot;
 	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, m_HandlerID);
 }
 
 void Texture::Unbind() const
 {
+	glActiveTexture(GL_TEXTURE0 + m_LastSlot);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -7,41 +7,48 @@
 class ApplicationWindow
 {
 private:
-	GLFWwindow* m_Window = nullptr; //TODO: maybe unique_ptr ?
+	GLFWwindow* m_Window = nullptr;
 	int m_Width, m_Height;
-	float m_DefaultRatio; //TODO: implement framebuffer screen ratio to avoid distording render after resizing
+	float m_AspectRatio;
 	bool m_Vsync = 1; // = VSYNC ON by default (monitor refresh rate = fps) - Better to be on (otherwise my gpu explodes lmao)
-
-	//TODO: Move to Camera.cpp
-	double m_LastMouseX, m_LastMouseY;
 
 public:
 	ApplicationWindow(const std::string& title, int width, int height);
 	~ApplicationWindow();
 
-	void HandleKeyInput();
+	void Update();
 
-	//NOTE: is it bad to have these getters/setters inside the header?
 	void ToggleVsync()
 	{
 		m_Vsync = !m_Vsync;
 		glfwSwapInterval(m_Vsync);
 	}
 
-	inline bool IsVsync() { return m_Vsync; }
+	inline bool IsVsync() const { return m_Vsync; }
 
-	void SetTitle(const std::string& title)
+	void SetTitle(const std::string& title) const
 	{
 		glfwSetWindowTitle(m_Window, title.c_str());
 	}
 
+	void Resize(int width, int height)
+	{
+		glViewport(0, 0, width, height);
+		m_Width = width;
+		m_Height = height;
+		m_AspectRatio = (float)width / (float)height;
+	}
+
 	inline int ShouldClose() const { return glfwWindowShouldClose(m_Window); }
 
-	//NOTE: temp because Renderer not done and I don't think it is a good thing that we can access this ptr
-	inline GLFWwindow* GetWindowPointerTemp() const { return m_Window; }
+	inline GLFWwindow* GetWindowPointer() const { return m_Window; }
+
+	inline float GetAspectRatio() const { return m_AspectRatio; }
 
 private:
 
 	void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 	void MousePosCallback(GLFWwindow* window, double mouseX, double mouseY);
+	void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 };

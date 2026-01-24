@@ -21,6 +21,7 @@
 #include "Square.h"
 #include "Cube.h"
 #include "Input.h"
+#include "LightSource.h"
 
 int main(void)
 {
@@ -32,6 +33,7 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    Shader simpleColorShader("assets/shaders/basic.vert", "assets/shaders/simpleColor.frag");
     // Double texture shade
     Shader doubleTextureShader("assets/shaders/basic.vert", "assets/shaders/doubleTexture.frag");
     doubleTextureShader.Bind();
@@ -39,6 +41,7 @@ int main(void)
     Texture texture0("assets/textures/test1.png");
     Texture texture1("assets/textures/test.png");
     // Material => link Texture&Slot and just all the loaded textures in a list in the Renderer?
+    // Also, could be a sampler2D array, each vertex has a texIndex, and each frame glBindTextureUnit
     texture0.Bind(0);
     doubleTextureShader.SetUniform1i("u_Texture0", 0);
     texture1.Bind(1);
@@ -46,8 +49,9 @@ int main(void)
 
     doubleTextureShader.Unbind();
 
-    // Light shader
-    Shader simpleColorShader("assets/shaders/basic.vert", "assets/shaders/simpleColor.frag");
+    // Light part
+    Shader lightSourceShader("assets/shaders/lightSource.vert", "assets/shaders/simpleColor.frag");
+    Shader basicLightningShader("assets/shaders/basicLightning.vert", "assets/shaders/basicLightning.frag");
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
@@ -61,7 +65,7 @@ int main(void)
         appWindow.ToggleVsync();
 
     // Average fps (not very satisfied with it)
-    const unsigned int fpsHistoryLimit = 500;
+    const unsigned int fpsHistoryLimit = 1000;
     const unsigned int averageFpsRefreshRate = 100;
     double fpsHistory[fpsHistoryLimit] = { 0 };
     unsigned int fpsPointer = 0;
@@ -74,9 +78,20 @@ int main(void)
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     square.SetScale(glm::vec3(0.5f));
 
-    Cube cube1(glm::vec3(0.0f, 1.5f, 0.0f));
-    Cube cube2(glm::vec3(0.0f, 0.0f, 0.0f));
+    Cube cube1(glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(1.0f, 0.5f, 1.0f));
+    LightSource lightSourceCube(glm::vec3(0.0f, 0.0f, 0.0f));
     double rotationRadius = 2.0f;
+
+    glm::vec3 lightColor(1.0f);
+    float fogMinDist = 10.0f;
+    float fogMaxDist = 50.0f;
+    float ambientStrength = 0.1f;
+    float specularStrength = 0.5f;
+    int specularShininess = 32;
+    bool enableMsaa = 1;
+    bool moveLight = 1;
+    bool worldSpaceCalc = 1;
+    bool phongShading = 1;
     
     while (!appWindow.ShouldClose())
     {
@@ -116,7 +131,13 @@ int main(void)
             lastTime = currentTime;
 
             /* Update */
-            if (Input::IsKeyPressed(GLFW_KEY_R)) simpleColorShader.Reload();
+            if (Input::IsKeyPressed(GLFW_KEY_R))
+            {
+                simpleColorShader.Reload();
+                doubleTextureShader.Reload();
+                lightSourceShader.Reload();
+                basicLightningShader.Reload();
+            }
             appWindow.Update();
             camera.Update(deltaTime);
             camera.SetAspectRatio(appWindow.GetAspectRatio()); //TODO: replace with events
@@ -125,6 +146,9 @@ int main(void)
             glm::mat4 projection = camera.GetProj();
 
             /* Render */
+            if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
+            else glDisable(GL_MULTISAMPLE);
+
             glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
@@ -134,42 +158,70 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_View", view);
             doubleTextureShader.SetUniformMat4f("u_Projection", projection);
 
+            const glm::vec3& camPos = camera.GetPos();
             // My eyes are bleeding with all of these duplicated lines but it'll be changed soon (it's just the Cube/Square implementation should be rewritten it's bad)
             glm::mat4 model = square.GetModelMatrix();
             glm::mat4 MVP = projection * view * model;
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             square.Draw();
+
             doubleTextureShader.Unbind();
 
-            simpleColorShader.Bind();
+            basicLightningShader.Bind();
             model = cube1.GetModelMatrix();
             MVP = projection * view * model;
-            doubleTextureShader.SetUniformMat4f("u_Model", model);
-            doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
+            basicLightningShader.SetUniformMat4f("u_Model", model);
+            basicLightningShader.SetUniformMat4f("u_View", view);
+            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
+            basicLightningShader.SetUniform3f("u_LightColor", lightColor.r, lightColor.g, lightColor.b);
+            const glm::vec3& lightPos = lightSourceCube.GetPosition();
+            basicLightningShader.SetUniform3f("u_LightPos", lightPos.x, lightPos.y, lightPos.z);
+            basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
+            basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
+            basicLightningShader.SetUniform1f("u_AmbientStrength", ambientStrength);
+            basicLightningShader.SetUniform1f("u_SpecularStrength", specularStrength);
+            basicLightningShader.SetUniform1i("u_SpecularShininess", specularShininess);
+            basicLightningShader.SetUniform3f("u_CameraPos", camPos.x, camPos.y, camPos.z);
+            basicLightningShader.SetUniform1i("u_WorldSpaceCalc", worldSpaceCalc);
+            basicLightningShader.SetUniform1i("u_PhongShading", phongShading);
             cube1.Draw();
+            basicLightningShader.Unbind();
 
-            cube2.SetPosition(glm::vec3(rotationRadius*cos(currentTime), 0, rotationRadius*sin(currentTime)));
-            model = cube2.GetModelMatrix();
+            lightSourceShader.Bind();
+            if(moveLight) lightSourceCube.SetPosition(glm::vec3(rotationRadius*cos(currentTime), 1.5f+sin(currentTime), rotationRadius * sin(currentTime)));
+            model = lightSourceCube.GetModelMatrix();
             MVP = projection * view * model;
-            doubleTextureShader.SetUniformMat4f("u_Model", model);
-            doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
-            cube2.Draw();
-            simpleColorShader.Unbind();
+            lightSourceShader.SetUniformMat4f("u_Model", model);
+            lightSourceShader.SetUniformMat4f("u_MVP", MVP);
+            lightSourceCube.Draw();
+            lightSourceShader.Unbind();
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             {
-                glm::vec3 squareRot(square.GetEulerRotation());
+                glm::vec3 cubeScale(cube1.GetScale());
+                glm::vec3 lightSourcePos(lightSourceCube.GetPosition());
                 ImGui::Begin("Test");
-                ImGui::SliderFloat3("SquareRot", &squareRot[0], -360.0f, 360.0f);
-                const glm::vec3& camPos = camera.GetPos();
+                ImGui::SliderFloat3("LightColor", &lightColor[0], 0.0f, 1.0f);
+                ImGui::SliderFloat3("LightPos", &lightSourcePos[0], -5.0f, 5.0f);
+                ImGui::SliderFloat3("CubeSize", &cubeScale[0], 0.5f, 2.0f);
                 ImGui::Text("Camera: %.2f;%.2f;%.2f (%.2f;%.2f) - FOV: %.1f", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch(), camera.GetFOV());
+                ImGui::SliderFloat("FogMin", &fogMinDist, 0.0f, 100.0f);
+                ImGui::SliderFloat("FogMax", &fogMaxDist, 0.0f, 100.0f);
+                ImGui::SliderFloat("AmbientStrength", &ambientStrength, 0.0f, 1.0f);
+                ImGui::SliderFloat("SpecStrength", &specularStrength, 0.0f, 1.0f);
+                ImGui::SliderInt("SpecPowFactor", &specularShininess, 0, 512);
+                ImGui::Checkbox("MSAA", &enableMsaa);
+                ImGui::Checkbox("MoveLight", &moveLight);
+                ImGui::Checkbox("WorldSpaceCalc", &worldSpaceCalc);
+                ImGui::Checkbox("PhongShading", &phongShading);
                 float imguiFps = ImGui::GetIO().Framerate;
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0/imguiFps, imguiFps);
                 ImGui::End();
-                square.SetEulerRotation(squareRot);
+                cube1.SetScale(cubeScale);
+                lightSourceCube.SetPosition(lightSourcePos);
             }
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

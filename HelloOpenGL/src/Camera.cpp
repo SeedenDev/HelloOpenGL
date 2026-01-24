@@ -98,8 +98,8 @@ void Camera::Update(double deltaTime)
     if (m_Far < 10.0f) m_Far = 10.0f;
     if (m_Far > 1000.0f) m_Far = 1000.0f;
 
-    if (Input::IsKeyPressed(GLFW_KEY_HOME)) m_FOV -= 0.5f;
-    if (Input::IsKeyPressed(GLFW_KEY_END)) m_FOV += 0.5f;
+    if (Input::IsKeyPressed(GLFW_KEY_HOME)) m_FOV -= 0.1f;
+    if (Input::IsKeyPressed(GLFW_KEY_END)) m_FOV += 0.1f;
     if (m_FOV < 1.0f) m_FOV = 1.0f;
     if (m_FOV > 100.0f) m_FOV = 100.0f;
 

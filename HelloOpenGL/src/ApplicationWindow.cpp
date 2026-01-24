@@ -23,6 +23,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+    glfwWindowHint(GLFW_SAMPLES, 16); // MSAA
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
@@ -60,40 +61,40 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     glfwSetWindowUserPointer(window, this);
 
     // Have to do this because GLFW is a C API lib = objects don't exist. Solutions: 1) have a function calling your method 2) this kind of lambda
-    auto frameBufferCallback = [](GLFWwindow* window, int width, int height)
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->FramebufferSizeCallback(window, width, height);
-        };
-    glfwSetFramebufferSizeCallback(window, frameBufferCallback);
+        }
+    );
 
-    auto cursorPosCallback = [](GLFWwindow* window, double mouseX, double mouseY)
+    glfwSetCursorPosCallback(window, [](GLFWwindow* window, double mouseX, double mouseY)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->MousePosCallback(window, mouseX, mouseY);
-        };
-    glfwSetCursorPosCallback(window, cursorPosCallback);
+        }
+    );
 
-    auto scrollCallback = [](GLFWwindow* window, double xoffset, double yoffset)
+    glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->ScrollCallback(window, xoffset, yoffset);
-        };
-    glfwSetScrollCallback(window, scrollCallback);
+        }
+    );
 
-    auto mouseButtonCallback = [](GLFWwindow* window, int button, int action, int mods)
+    glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->MouseButtonCallback(window, button, action, mods);
-        };
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+        }
+    );
 
-    auto windowFocusCallback = [](GLFWwindow* window, int focused)
+    glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int focused)
         {
             ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
             appWindow->WindowFocusCallback(window, focused);
-        };
-    glfwSetWindowFocusCallback(window, windowFocusCallback);
+        }
+    );
 
 
     // Setup Dear ImGui context

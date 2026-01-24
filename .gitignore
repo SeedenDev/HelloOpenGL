@@ -366,3 +366,5 @@ FodyWeavers.xsd
 # VS files
 *.vcxproj.filters
 *.vcxproj.user
+
+HelloOpenGL/imgui.ini

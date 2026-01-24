@@ -179,6 +179,7 @@
     <ClInclude Include="src\ApplicationWindow.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\LightSource.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Square.h" />
     <ClInclude Include="src\Texture.h" />
@@ -487,8 +488,11 @@
     <ClInclude Include="src\VertexLayout.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\basicLightning.frag" />
+    <None Include="assets\shaders\basicLightning.vert" />
     <None Include="assets\shaders\doubleTexture.frag" />
     <None Include="assets\shaders\basic.vert" />
+    <None Include="assets\shaders\lightSource.vert" />
     <None Include="assets\shaders\simpleColor.frag" />
     <None Include="vendors\glm\detail\func_common.inl" />
     <None Include="vendors\glm\detail\func_common_simd.inl" />

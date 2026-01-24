@@ -1,5 +1,8 @@
 #include "VertexArray.h"
 
+#include <string>
+#include <iostream>
+
 VertexArray::VertexArray()
 {
 	unsigned int vao;

@@ -12,12 +12,12 @@ private:
     GLFWwindow* m_WindowPtr;
     float m_AspectRatio;
 
-    float m_BaseCamSpeed = 2.5f;
+    float m_HorizontalSpeed = 2.5f, m_VerticalSpeed = 1.5f;
     float m_Sensitivity = 0.1f, m_Yaw = -90.0f, m_Pitch = 0.0f;
     float m_FOV = 45.0f, m_Near = 0.1f, m_Far = 100.0f;
 
     glm::vec3 m_CamPos, m_CamFront, m_CamRight, m_CamUp;
-    glm::mat4 m_ViewMatrix, m_ProjMatrix;
+    glm::mat4 m_ViewMatrix = glm::mat4(1.0f), m_ProjMatrix = glm::mat4(1.0f);
 
     bool m_FirstCall = 1;
     double m_LastMouseX, m_LastMouseY;
@@ -39,6 +39,10 @@ public:
     inline const glm::vec3& GetPos() const { return m_CamPos; }
     inline const glm::mat4& GetView() const { return m_ViewMatrix; }
     inline const glm::mat4& GetProj() const { return m_ProjMatrix; }
+
+    inline const float GetFOV() const { return m_FOV; }
+    inline const float GetYaw() const { return m_Yaw; }
+    inline const float GetPitch() const { return m_Pitch; }
 
 private:
 

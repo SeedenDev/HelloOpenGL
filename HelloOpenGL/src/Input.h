@@ -1,21 +1,30 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 
 class Input
 {
-private:
-	//TODO: just restart a project from scratch with a better architecture to avoid this and allow a singleton without "gl.h included before glew.h" error lmao
-	static GLFWwindow* s_WindowPtr;
-
 public:
 
-	static bool IsKeyPressed(const int keyCode);
+	static bool IsKeyPressed(const int keyCode)
+	{
+		GLFWwindow* windowPtr = ApplicationWindow::Get().GetWindowPointer();
+		return glfwGetKey(windowPtr, keyCode) == GLFW_PRESS && ApplicationWindow::Get().IsFocused();
+	}
 
-	static bool IsMouseButtonPressed(int button);
+	static bool IsMouseButtonPressed(int button)
+	{
+		GLFWwindow* windowPtr = ApplicationWindow::Get().GetWindowPointer();
+		return glfwGetMouseButton(windowPtr, button) == GLFW_PRESS && ApplicationWindow::Get().IsFocused();
+	}
 
-	static glm::vec2 GetMousePos();
-
-	static void SetWindowPointer(GLFWwindow* windowPtr);
+	static glm::vec2 GetMousePos()
+	{
+		GLFWwindow* windowPtr = ApplicationWindow::Get().GetWindowPointer();
+		double mouseX, mouseY;
+		glfwGetCursorPos(windowPtr, &mouseX, &mouseY);
+		return { mouseX, mouseY };
+	}
 };

@@ -24,7 +24,7 @@ public:
     void SetUniform2f(const std::string& name, float v0, float v1);
     void SetUniform3f(const std::string& name, float v0, float v1, float v2);
     void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
-    void SetUniformMat4(const std::string& name, glm::mat4 mat);
+    void SetUniformMat4f(const std::string& name, glm::mat4 mat);
 
 	void Bind() const;
 	void Unbind() const;

@@ -1,12 +1,19 @@
 #include "ApplicationWindow.h"
 
 #include <iostream>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
+
 #include "GLUtil.h"
 #include "Input.h"
+
+ApplicationWindow* ApplicationWindow::s_Instance = nullptr;
 
 ApplicationWindow::ApplicationWindow(const std::string& title, int width, int height)
     : m_Width(width), m_Height(height), m_AspectRatio((float) width / (float) height)
 {
+    s_Instance = this;
     GLFWwindow* window;
 
     if (!glfwInit())
@@ -25,11 +32,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
         glfwTerminate();
         return;
     }
-
     glfwMakeContextCurrent(window);
-    Input::SetWindowPointer(window);
-
-    glfwSwapInterval(m_Vsync); 
 
     if (glewInit() != GLEW_OK)
     {
@@ -50,7 +53,10 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
 #endif
 
     glViewport(0, 0, width, height);
+    glfwSwapInterval(m_Vsync);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+    // Callbacks
     glfwSetWindowUserPointer(window, this);
 
     // Have to do this because GLFW is a C API lib = objects don't exist. Solutions: 1) have a function calling your method 2) this kind of lambda
@@ -82,18 +88,49 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
         };
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
+    auto windowFocusCallback = [](GLFWwindow* window, int focused)
+        {
+            ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+            appWindow->WindowFocusCallback(window, focused);
+        };
+    glfwSetWindowFocusCallback(window, windowFocusCallback);
+
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
     m_Window = window;
 }
 
 ApplicationWindow::~ApplicationWindow()
 {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
 }
 
 void ApplicationWindow::Update()
 {
     if (Input::IsKeyPressed(GLFW_KEY_ESCAPE))
-        glfwSetWindowShouldClose(m_Window, true);
+    {
+        if (Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT)) glfwSetWindowShouldClose(m_Window, true);
+        else if (m_LastTimePausePressed <= glfwGetTime())
+        {
+            m_Paused = !m_Paused;
+            glfwSetInputMode(m_Window, GLFW_CURSOR, m_Paused ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+            m_LastTimePausePressed = glfwGetTime() + 0.2f;
+        }
+    }
 }
 
 // private
@@ -115,4 +152,9 @@ void ApplicationWindow::ScrollCallback(GLFWwindow* window, double xoffset, doubl
 void ApplicationWindow::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
 
+}
+
+void ApplicationWindow::WindowFocusCallback(GLFWwindow* window, int focused)
+{
+    m_Focused = focused == GL_TRUE;
 }

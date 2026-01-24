@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "ApplicationWindow.h"
 #include "Input.h"
 
 glm::vec3 Camera::s_WorldUp(0.0f, 1.0f, 0.0f);
@@ -11,15 +12,27 @@ Camera::Camera(GLFWwindow* window, float aspectRatio)
     : m_WindowPtr(window), m_AspectRatio(aspectRatio), m_CamPos(0.0f), m_CamFront(0.0f, 0.0f, -1.0f), m_CamUp(0.0f, 1.0f, 0.0f)
 {
 
-    // Tell GLFW to hide the cursor and capture it once focused
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 Camera::~Camera(){}
 
+// Custom lookAt matrix
+glm::mat4 LookAt(glm::vec3 camPos, glm::vec3 camTarget, glm::vec3 camUp)
+{
+    glm::vec3 camDir(glm::normalize(camPos - camTarget));
+    glm::vec3 camRight(glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), camDir)));
+    glm::vec3 camUpUp(glm::normalize(glm::cross(camDir, camRight)));
+
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -camPos);
+    // Column major. 4 elements = a column.
+    glm::mat4 rotationMatrix = glm::mat4x4(camRight.x, camUp.x, camDir.x, 0,    camRight.y, camUp.y, camDir.y, 0,   camRight.z, camUp.z, camDir.z, 0,   0, 0, 0, 1);
+
+    return rotationMatrix * translationMatrix;
+}
+
 void Camera::Update(double deltaTime)
 {
-    //TODO: everything is still working without focus on the window!!!!
+    if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
 
     // Mouse XY / Cam Yaw;Pitch
     glm::vec2 mousePos = Input::GetMousePos();
@@ -50,32 +63,32 @@ void Camera::Update(double deltaTime)
     m_CamUp = glm::normalize(glm::cross(m_CamRight, m_CamFront));
 
     // Camera position
-    bool lShiftPressed = glfwGetKey(m_WindowPtr, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-    float camSpeed = m_BaseCamSpeed;
+    bool lShiftPressed = Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT);
+    float camSpeedH = m_HorizontalSpeed;
+    float camSpeedV = m_VerticalSpeed;
     if (lShiftPressed)
     {
-        camSpeed *= 2;
+        camSpeedH *= 2;
+        camSpeedV *= 2;
     }
-    camSpeed *= deltaTime;
+    camSpeedH *= deltaTime;
 
-    //Issue: Z/Q are anyway W/A, but if I set W/A it is W/A
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_W) == GLFW_PRESS) m_CamPos += camSpeed * m_CamFront;
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_S) == GLFW_PRESS) m_CamPos -= camSpeed * m_CamFront;
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_A) == GLFW_PRESS) m_CamPos -= camSpeed * m_CamRight;
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_D) == GLFW_PRESS) m_CamPos += camSpeed * m_CamRight;
-    // maybe need a up/down key
+    if (Input::IsKeyPressed(GLFW_KEY_W)) m_CamPos += camSpeedH * m_CamFront;
+    if (Input::IsKeyPressed(GLFW_KEY_S)) m_CamPos -= camSpeedH * m_CamFront;
+    if (Input::IsKeyPressed(GLFW_KEY_A)) m_CamPos -= camSpeedH * m_CamRight;
+    if (Input::IsKeyPressed(GLFW_KEY_D)) m_CamPos += camSpeedH * m_CamRight;
+    if (Input::IsKeyPressed(GLFW_KEY_SPACE)) m_CamPos.y += camSpeedV * deltaTime;
+    if (Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL)) m_CamPos.y -= camSpeedV * deltaTime;
 
     m_ViewMatrix = glm::lookAt(m_CamPos, m_CamPos + m_CamFront, m_CamUp);
 
     // Camera settings
-
-    //Issue: Too fast????? (especially fov & far)
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+    if (Input::IsKeyPressed(GLFW_KEY_PAGE_UP))
     {
         if (lShiftPressed) m_Near += 0.1f;
         else m_Far += 0.1f;
     }
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+    if (Input::IsKeyPressed(GLFW_KEY_PAGE_DOWN))
     {
         if (lShiftPressed) m_Near -= 0.1f;
         else m_Far -= 0.1f;
@@ -85,8 +98,8 @@ void Camera::Update(double deltaTime)
     if (m_Far < 10.0f) m_Far = 10.0f;
     if (m_Far > 1000.0f) m_Far = 1000.0f;
 
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_HOME) == GLFW_PRESS) m_FOV -= 0.5f;
-    if (glfwGetKey(m_WindowPtr, GLFW_KEY_END) == GLFW_PRESS) m_FOV += 0.5f;
+    if (Input::IsKeyPressed(GLFW_KEY_HOME)) m_FOV -= 0.5f;
+    if (Input::IsKeyPressed(GLFW_KEY_END)) m_FOV += 0.5f;
     if (m_FOV < 1.0f) m_FOV = 1.0f;
     if (m_FOV > 100.0f) m_FOV = 100.0f;
 

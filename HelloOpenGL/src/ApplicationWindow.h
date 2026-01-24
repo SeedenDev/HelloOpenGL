@@ -7,14 +7,22 @@
 class ApplicationWindow
 {
 private:
+	static ApplicationWindow* s_Instance;
+
 	GLFWwindow* m_Window = nullptr;
 	int m_Width, m_Height;
 	float m_AspectRatio;
 	bool m_Vsync = 1; // = VSYNC ON by default (monitor refresh rate = fps) - Better to be on (otherwise my gpu explodes lmao)
+	bool m_Paused = 0;
+	bool m_Focused = 1;
+
+	double m_LastTimePausePressed; // Temp fix for "pausing" (access cursor) bc it's hell
 
 public:
 	ApplicationWindow(const std::string& title, int width, int height);
 	~ApplicationWindow();
+
+	static ApplicationWindow& Get() { return *s_Instance; }
 
 	void Update();
 
@@ -45,10 +53,15 @@ public:
 
 	inline float GetAspectRatio() const { return m_AspectRatio; }
 
+	inline bool IsPaused() const { return m_Paused; }
+
+	inline bool IsFocused() const { return m_Focused; }
+
 private:
 
 	void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 	void MousePosCallback(GLFWwindow* window, double mouseX, double mouseY);
 	void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+	void WindowFocusCallback(GLFWwindow* window, int focused);
 };

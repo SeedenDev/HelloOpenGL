@@ -8,12 +8,13 @@ out vec4 vertexScreenPos;
 out vec3 vertexColor;
 
 uniform mat4 u_MVP;
+uniform vec3 u_LightColor;
 
 void main()
 {
     vec4 newPos = u_MVP * pos;
     vertexBasePos = pos;
     vertexScreenPos = newPos;
-    vertexColor = color;
+    vertexColor = u_LightColor;
     gl_Position = newPos;
 }

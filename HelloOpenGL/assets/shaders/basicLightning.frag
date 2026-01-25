@@ -2,24 +2,28 @@
 
 out vec4 outColor;
 
-in vec4 vertexBasePos;
 in vec3 vertexWorldPos;
-in vec3 vertexColor;
-in vec3 vertexBaseNormal;
 in vec3 vertexComputedNormal;
 
-uniform vec3 u_LightPos;
-uniform vec3 u_LightColor;
+struct Material 
+{
+    vec3 ambient; // color under ambient lightning => surface color
+    vec3 diffuse; // color under diffuse lightning => surface color too
+    vec3 specular; // color of specular highlight or reflect a surface-specific color
+    float shininess; // scattering
+};
+uniform Material material;
+
+struct Light 
+{
+    vec3 position;
+    vec3 ambient; // usually low intensity because it's ambient lightning
+    vec3 diffuse; // the exact color of the light
+    vec3 specular; // shining intensity
+};
+uniform Light light;
+
 uniform vec3 u_CameraPos;
-
-uniform float u_AmbientStrength;
-uniform float u_SpecularStrength;
-uniform int u_SpecularShininess;
-
-uniform bool u_PhongShading;
-uniform bool u_WorldSpaceCalc;
-uniform mat4 u_Model;
-uniform mat4 u_View;
 
 // Just an experiment because I saw this code and it was fun to test
 uniform float u_FogMin;
@@ -27,47 +31,25 @@ uniform float u_FogMax;
 
 void main()
 {
-    if(!u_PhongShading)
-    {
-        outColor = vec4(vertexColor, 1.0);
-        return;
-    }
-
-    vec3 normal, lightDir, viewDir;
-
-    if(u_WorldSpaceCalc)
-    {
-        normal = normalize(vertexComputedNormal);
-        lightDir = normalize(u_LightPos - vertexWorldPos);
-        viewDir = vertexWorldPos - u_CameraPos;
-    }
-    else
-    {
-        //  View space calculations (these three could be done in the vertex shader for a performance gain but as it is just a test I don't really care)
-        vec3 viewWorldPos = vec3(u_View * u_Model * vertexBasePos);
-        vec3 viewComputedNormal = mat3(transpose(inverse(u_View * u_Model))) * vertexBaseNormal;
-        vec3 lightPos = vec3(u_View * vec4(u_LightPos, 1.0));
-
-        normal = normalize(viewComputedNormal);
-        lightDir = normalize(lightPos - viewWorldPos);
-        viewDir = viewWorldPos;
-    }
+    vec3 normal = normalize(vertexComputedNormal);
+    vec3 lightDir = normalize(light.position - vertexWorldPos);
+    vec3 viewDir = vertexWorldPos - u_CameraPos;
     
-    vec3 ambient = u_AmbientStrength * u_LightColor;
+    vec3 ambient = material.ambient * light.ambient;
 
     float diffuseStrength = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diffuseStrength * u_LightColor;
+    vec3 diffuse = (material.diffuse * diffuseStrength) * light.diffuse;
 
     float dist = length(viewDir);
     viewDir = normalize(viewDir);
 
     vec3 reflectDir = reflect(lightDir, normal);
-    float specularFactor = pow(max(dot(viewDir, reflectDir), 0.0), u_SpecularShininess);
-    vec3 specular = u_SpecularStrength * specularFactor * u_LightColor;
+    float specularFactor = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    vec3 specular = (material.specular * specularFactor) * light.specular;
 
-    vec3 finalColor = (ambient + diffuse + specular) * vertexColor;
+    vec3 finalColor = ambient + diffuse + specular;
 
-    // Fog test
+    // Fog test (to move to a special shader when I know how to combine shaders without having to do 2 draw calls)
     vec4 fogColor = vec4(0.4, 0.4, 0.4, 1.0);
     float focFactor = (u_FogMax - dist) / (u_FogMax - u_FogMin);
     focFactor = clamp(focFactor, 0.0, 1.0);

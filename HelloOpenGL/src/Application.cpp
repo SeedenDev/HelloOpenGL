@@ -22,10 +22,11 @@
 #include "Cube.h"
 #include "Input.h"
 #include "LightSource.h"
+#include "Material.h"
 
 int main(void)
 {
-    ApplicationWindow appWindow("Hello OpenGL", 720, 480);
+    ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
@@ -78,21 +79,16 @@ int main(void)
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     square.SetScale(glm::vec3(0.5f));
 
-    Cube cube1(glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(1.0f, 0.5f, 1.0f));
-    LightSource lightSourceCube(glm::vec3(0.0f, 0.0f, 0.0f));
+    Material mat1(glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(0.8f, 0.8f, 0.8f), 64);
+    Cube cube1(glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(1.0f));
+    LightSource lightSourceCube(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f));
     double rotationRadius = 2.0f;
 
-    glm::vec3 lightColor(1.0f);
     float fogMinDist = 10.0f;
     float fogMaxDist = 50.0f;
-    float ambientStrength = 0.1f;
-    float specularStrength = 0.5f;
-    int specularShininess = 32;
     bool enableMsaa = 1;
     bool moveLight = 1;
-    bool worldSpaceCalc = 1;
-    bool phongShading = 1;
-    
+
     while (!appWindow.ShouldClose())
     {
         /* Poll for and process events */
@@ -155,13 +151,11 @@ int main(void)
             doubleTextureShader.Bind();
             doubleTextureShader.SetUniform1f("u_Time", currentTime);
 
-            doubleTextureShader.SetUniformMat4f("u_View", view);
-            doubleTextureShader.SetUniformMat4f("u_Projection", projection);
-
-            const glm::vec3& camPos = camera.GetPos();
             // My eyes are bleeding with all of these duplicated lines but it'll be changed soon (it's just the Cube/Square implementation should be rewritten it's bad)
             glm::mat4 model = square.GetModelMatrix();
             glm::mat4 MVP = projection * view * model;
+            doubleTextureShader.SetUniformMat4f("u_View", view);
+            doubleTextureShader.SetUniformMat4f("u_Projection", projection);
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             square.Draw();
@@ -174,17 +168,17 @@ int main(void)
             basicLightningShader.SetUniformMat4f("u_Model", model);
             basicLightningShader.SetUniformMat4f("u_View", view);
             basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-            basicLightningShader.SetUniform3f("u_LightColor", lightColor.r, lightColor.g, lightColor.b);
-            const glm::vec3& lightPos = lightSourceCube.GetPosition();
-            basicLightningShader.SetUniform3f("u_LightPos", lightPos.x, lightPos.y, lightPos.z);
             basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
             basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
-            basicLightningShader.SetUniform1f("u_AmbientStrength", ambientStrength);
-            basicLightningShader.SetUniform1f("u_SpecularStrength", specularStrength);
-            basicLightningShader.SetUniform1i("u_SpecularShininess", specularShininess);
-            basicLightningShader.SetUniform3f("u_CameraPos", camPos.x, camPos.y, camPos.z);
-            basicLightningShader.SetUniform1i("u_WorldSpaceCalc", worldSpaceCalc);
-            basicLightningShader.SetUniform1i("u_PhongShading", phongShading);
+            basicLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPos());
+            basicLightningShader.SetUniformVec3f("material.ambient", mat1.GetAmbientColor());
+            basicLightningShader.SetUniformVec3f("material.diffuse", mat1.GetDiffuseColor());
+            basicLightningShader.SetUniformVec3f("material.specular", mat1.GetSpecularColor());
+            basicLightningShader.SetUniform1f("material.shininess", mat1.GetSpecularShininess());
+            basicLightningShader.SetUniformVec3f("light.position", lightSourceCube.GetPosition());
+            basicLightningShader.SetUniformVec3f("light.ambient", lightSourceCube.GetAmbientColor());
+            basicLightningShader.SetUniformVec3f("light.diffuse", lightSourceCube.GetDiffuseColor());
+            basicLightningShader.SetUniformVec3f("light.specular", lightSourceCube.GetSpecularColor());
             cube1.Draw();
             basicLightningShader.Unbind();
 
@@ -192,8 +186,11 @@ int main(void)
             if(moveLight) lightSourceCube.SetPosition(glm::vec3(rotationRadius*cos(currentTime), 1.5f+sin(currentTime), rotationRadius * sin(currentTime)));
             model = lightSourceCube.GetModelMatrix();
             MVP = projection * view * model;
+            lightSourceShader.SetUniformMat4f("u_View", view);
+            lightSourceShader.SetUniformMat4f("u_Projection", projection);
             lightSourceShader.SetUniformMat4f("u_Model", model);
             lightSourceShader.SetUniformMat4f("u_MVP", MVP);
+            lightSourceShader.SetUniformVec3f("u_LightColor", lightSourceCube.GetDiffuseColor());
             lightSourceCube.Draw();
             lightSourceShader.Unbind();
 
@@ -203,23 +200,36 @@ int main(void)
             {
                 glm::vec3 cubeScale(cube1.GetScale());
                 glm::vec3 lightSourcePos(lightSourceCube.GetPosition());
-                ImGui::Begin("Test");
-                ImGui::SliderFloat3("LightColor", &lightColor[0], 0.0f, 1.0f);
-                ImGui::SliderFloat3("LightPos", &lightSourcePos[0], -5.0f, 5.0f);
-                ImGui::SliderFloat3("CubeSize", &cubeScale[0], 0.5f, 2.0f);
+                ImGui::Begin("Scene editor");
+                bool lightOpen = ImGui::TreeNode("Light");
+                if (lightOpen)
+                {
+                    ImGui::Checkbox("Move", &moveLight);
+                    ImGui::SliderFloat3("Position", &lightSourcePos[0], -5.0f, 5.0f);
+                    ImGui::ColorEdit3("AmbientColor", &lightSourceCube.GetAmbientColor()[0]);
+                    ImGui::ColorEdit3("DiffuseColor", &lightSourceCube.GetDiffuseColor()[0]);
+                    ImGui::ColorEdit3("SpecularColor", &lightSourceCube.GetSpecularColor()[0]);
+                    ImGui::TreePop();
+                }
+                bool cubeOpen = ImGui::TreeNode("Cube");
+                if (cubeOpen)
+                {
+                    ImGui::SliderFloat3("Size", &cubeScale[0], 0.5f, 2.0f);
+                    ImGui::ColorEdit3("AmbientColor", &mat1.GetAmbientColor()[0]);
+                    ImGui::ColorEdit3("DiffuseColor", &mat1.GetDiffuseColor()[0]);
+                    ImGui::ColorEdit3("SpecularColor", &mat1.GetSpecularColor()[0]);
+                    ImGui::SliderFloat("SpecShininess", &mat1.GetSpecularShininess(), 0.0f, 512.0f);
+                    ImGui::TreePop();
+                }
+                const glm::vec3& camPos = camera.GetPos();
                 ImGui::Text("Camera: %.2f;%.2f;%.2f (%.2f;%.2f) - FOV: %.1f", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch(), camera.GetFOV());
                 ImGui::SliderFloat("FogMin", &fogMinDist, 0.0f, 100.0f);
                 ImGui::SliderFloat("FogMax", &fogMaxDist, 0.0f, 100.0f);
-                ImGui::SliderFloat("AmbientStrength", &ambientStrength, 0.0f, 1.0f);
-                ImGui::SliderFloat("SpecStrength", &specularStrength, 0.0f, 1.0f);
-                ImGui::SliderInt("SpecPowFactor", &specularShininess, 0, 512);
                 ImGui::Checkbox("MSAA", &enableMsaa);
-                ImGui::Checkbox("MoveLight", &moveLight);
-                ImGui::Checkbox("WorldSpaceCalc", &worldSpaceCalc);
-                ImGui::Checkbox("PhongShading", &phongShading);
                 float imguiFps = ImGui::GetIO().Framerate;
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0/imguiFps, imguiFps);
                 ImGui::End();
+
                 cube1.SetScale(cubeScale);
                 lightSourceCube.SetPosition(lightSourcePos);
             }

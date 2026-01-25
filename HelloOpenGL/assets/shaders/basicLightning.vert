@@ -20,14 +20,12 @@ uniform mat4 u_MVP;
 
 void main()
 {
-    vec4 newPos = u_MVP * pos;
-    vec4 worldPos = u_Model * pos;
     vertexBasePos = pos;
-    vertexWorldPos = worldPos.xyz;
-    vertexScreenPos = newPos;
+    vertexWorldPos = vec3(u_Model * pos);
+    vertexScreenPos = u_MVP * pos;
     vertexBaseNormal = normal;
     vertexComputedNormal = mat3(transpose(inverse(u_Model))) * normal;
     vertexColor = color;
     vertexTex = tex;
-    gl_Position = newPos;
+    gl_Position = vertexScreenPos;
 }

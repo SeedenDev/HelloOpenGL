@@ -5,6 +5,11 @@
 class Material
 {
 private:
+	/* Small notes
+		For now, ambient-diffuse-specular are unused because diffuseMap & specularMap are instead of them.
+		In an engine, material should have the options between plain colors or textures for these 3 parameters.
+		But here, I'm learning opengl and not engineering an engine (I try at least)
+	*/
 	glm::vec3 m_AmbientColor;
 	glm::vec3 m_DiffuseColor;
 	glm::vec3 m_SpecularColor;

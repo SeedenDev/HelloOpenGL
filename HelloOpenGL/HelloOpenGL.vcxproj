@@ -638,6 +638,8 @@
     <None Include="vendors\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="assets\textures\container_diffuse.png" />
+    <Image Include="assets\textures\container_specular.png" />
     <Image Include="assets\textures\test.png" />
     <Image Include="assets\textures\test1.png" />
     <Image Include="assets\textures\test2.png" />

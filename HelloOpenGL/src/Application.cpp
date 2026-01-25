@@ -41,6 +41,12 @@ int main(void)
 
     Texture texture0("assets/textures/test1.png");
     Texture texture1("assets/textures/test.png");
+    Texture diffuseMapTexture("assets/textures/container_diffuse.png");
+    Texture specularMapTexture("assets/textures/container_specular.png");
+    Texture emissionMapTexture("assets/textures/container_emission.png");
+    diffuseMapTexture.Bind(10);
+    specularMapTexture.Bind(11);
+    emissionMapTexture.Bind(12);
     // Material => link Texture&Slot and just all the loaded textures in a list in the Renderer?
     // Also, could be a sampler2D array, each vertex has a texIndex, and each frame glBindTextureUnit
     texture0.Bind(0);
@@ -170,10 +176,11 @@ int main(void)
             basicLightningShader.SetUniformMat4f("u_MVP", MVP);
             basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
             basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
+            basicLightningShader.SetUniform1f("u_Time", currentTime); // for emission texture cool animation
             basicLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPos());
-            basicLightningShader.SetUniformVec3f("material.ambient", mat1.GetAmbientColor());
-            basicLightningShader.SetUniformVec3f("material.diffuse", mat1.GetDiffuseColor());
-            basicLightningShader.SetUniformVec3f("material.specular", mat1.GetSpecularColor());
+            basicLightningShader.SetUniform1i("material.diffuseMap", 10); // set value for now
+            basicLightningShader.SetUniform1i("material.specularMap", 11); // set value for 
+            basicLightningShader.SetUniform1i("material.emissionMap", 12); // set value for now
             basicLightningShader.SetUniform1f("material.shininess", mat1.GetSpecularShininess());
             basicLightningShader.SetUniformVec3f("light.position", lightSourceCube.GetPosition());
             basicLightningShader.SetUniformVec3f("light.ambient", lightSourceCube.GetAmbientColor());
@@ -215,9 +222,9 @@ int main(void)
                 if (cubeOpen)
                 {
                     ImGui::SliderFloat3("Size", &cubeScale[0], 0.5f, 2.0f);
-                    ImGui::ColorEdit3("AmbientColor", &mat1.GetAmbientColor()[0]);
-                    ImGui::ColorEdit3("DiffuseColor", &mat1.GetDiffuseColor()[0]);
-                    ImGui::ColorEdit3("SpecularColor", &mat1.GetSpecularColor()[0]);
+                    //ImGui::ColorEdit3("AmbientColor", &mat1.GetAmbientColor()[0]);
+                    //ImGui::ColorEdit3("DiffuseColor", &mat1.GetDiffuseColor()[0]);
+                    //ImGui::ColorEdit3("SpecularColor", &mat1.GetSpecularColor()[0]);
                     ImGui::SliderFloat("SpecShininess", &mat1.GetSpecularShininess(), 0.0f, 512.0f);
                     ImGui::TreePop();
                 }

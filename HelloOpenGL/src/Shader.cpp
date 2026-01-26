@@ -60,6 +60,11 @@ void Shader::SetUniformVec3f(const std::string& name, const glm::vec3& vec3)
     SetUniform3f(name, vec3.x, vec3.y, vec3.z);
 }
 
+void Shader::SetUniform1ui(const std::string& name, unsigned int v0)
+{
+    glUniform1ui(GetUniformLocation(name), v0);
+}
+
 void Shader::Bind() const
 {
     glUseProgram(m_RendererID);
@@ -136,10 +141,10 @@ unsigned int Shader::CreateProgram(const std::string& vertexShaderPath, const st
     return shaderProgram;
 }
 
+//TODO: just cache all the uniform locations (w/name) on shader loading (+ check Uniform Buffer Object, seems a nice thing)
 int Shader::GetUniformLocation(const std::string& name)
 {
-    if (m_UniformLocations.find(name) != m_UniformLocations.end())
-        return m_UniformLocations.at(name); // [name];
+    if (auto x = m_UniformLocations.find(name); x != m_UniformLocations.end()) return x->second;
     
     int location = glGetUniformLocation(m_RendererID, name.c_str());
     if (location == -1)

@@ -25,7 +25,7 @@ Square::Square(glm::vec3 position, glm::vec3 color)
     vbo.Unbind();
     ibo.Unbind();
 
-    ComputeModelMatrix();
+    UpdateModelMatrix();
 }
 
 Square::~Square()

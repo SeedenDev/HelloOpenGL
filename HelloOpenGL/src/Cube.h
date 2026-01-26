@@ -5,7 +5,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include "Geometry.h"
+#include "GlobalUtil.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
@@ -25,7 +25,7 @@ class Cube
 private:
 
     VertexArray m_Vao;
-    Transform3D m_Transform;
+    Geometry::Transform3D m_Transform;
 
     glm::mat4 m_ModelMatrix;
 
@@ -40,27 +40,27 @@ public:
     void SetPosition(glm::vec3 newPos)
     {
         m_Transform.position = newPos;
-        ComputeModelMatrix();
+        UpdateModelMatrix();
     }
     void Translate(glm::vec3 translation)
     {
         m_Transform.position += translation;
-        ComputeModelMatrix();
+        UpdateModelMatrix();
     }
     void SetEulerRotation(glm::vec3 newRotation)
     {
         m_Transform.rotation = newRotation;
-        ComputeModelMatrix();
+        UpdateModelMatrix();
     }
     void RotateEuler(glm::vec3 rotation)
     {
         m_Transform.rotation += rotation;
-        ComputeModelMatrix();
+        UpdateModelMatrix();
     }
     void SetScale(glm::vec3 newScale)
     {
         m_Transform.scale = newScale;
-        ComputeModelMatrix();
+        UpdateModelMatrix();
     }
 
     void Draw() const;
@@ -68,17 +68,9 @@ public:
     inline const glm::mat4& GetModelMatrix() const { return m_ModelMatrix; }
 
 private:
-    
-    //TODO: Same as Square.h so move into a helper for such things
-    void ComputeModelMatrix()
+
+    void UpdateModelMatrix()
     {
-        glm::mat4 model(1.0f);
-        model = glm::translate(model, m_Transform.position);
-        //TODO: Rotations are euler angles for now so gimble lock + not sure about the tri-rotation
-        model = glm::rotate(model, glm::radians(m_Transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(m_Transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(m_Transform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::scale(model, m_Transform.scale);
-        m_ModelMatrix = model;
+        m_ModelMatrix = MathUtil::ComputeModelMatrix(m_Transform);
     }
 };

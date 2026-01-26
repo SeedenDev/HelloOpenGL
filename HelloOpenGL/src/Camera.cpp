@@ -32,8 +32,6 @@ glm::mat4 LookAt(glm::vec3 camPos, glm::vec3 camTarget, glm::vec3 camUp)
 
 void Camera::Update(double deltaTime)
 {
-    if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
-
     // Mouse XY / Cam Yaw;Pitch
     glm::vec2 mousePos = Input::GetMousePos();
     double mouseX = mousePos.x, mouseY = mousePos.y;
@@ -47,6 +45,8 @@ void Camera::Update(double deltaTime)
     double offsetY = m_LastMouseY - mouseY;
     m_LastMouseX = mouseX;
     m_LastMouseY = mouseY;
+
+    if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
     m_Yaw += offsetX * m_Sensitivity;
     m_Pitch += offsetY * m_Sensitivity;
 
@@ -86,17 +86,17 @@ void Camera::Update(double deltaTime)
     if (Input::IsKeyPressed(GLFW_KEY_PAGE_UP))
     {
         if (lShiftPressed) m_Near += 0.1f;
-        else m_Far += 0.1f;
+        else m_Far += 1.0f;
     }
     if (Input::IsKeyPressed(GLFW_KEY_PAGE_DOWN))
     {
         if (lShiftPressed) m_Near -= 0.1f;
-        else m_Far -= 0.1f;
+        else m_Far -= 1.0f;
     }
     if (m_Near < 0.1f) m_Near = 0.1f;
     if (m_Near > 10.0f) m_Near = 10.0f;
     if (m_Far < 10.0f) m_Far = 10.0f;
-    if (m_Far > 1000.0f) m_Far = 1000.0f;
+    if (m_Far > 100000.0f) m_Far = 100000.0f;
 
     if (Input::IsKeyPressed(GLFW_KEY_HOME)) m_FOV -= 0.1f;
     if (Input::IsKeyPressed(GLFW_KEY_END)) m_FOV += 0.1f;

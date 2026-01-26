@@ -57,7 +57,7 @@ Cube::Cube(glm::vec3 position, glm::vec3 color)
     vbo.Unbind();
     ibo.Unbind();
 
-    ComputeModelMatrix();
+    UpdateModelMatrix();
 }
 
 Cube::~Cube()

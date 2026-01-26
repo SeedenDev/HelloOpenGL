@@ -36,9 +36,16 @@ public:
         m_AspectRatio = aspectRatio;
     }
 
-    inline const glm::vec3& GetPos() const { return m_CamPos; }
+    inline const void SetHorizontalSpeed(const float speed) { m_HorizontalSpeed = speed ; }
+    inline const void SetVerticalSpeed(const float speed) { m_VerticalSpeed = speed; }
+
+    inline const float GetHorizontalSpeed() const { return m_HorizontalSpeed; }
+    inline const float GetVerticalSpeed() const { return m_VerticalSpeed; }
+
+    inline const glm::vec3& GetPosition() const { return m_CamPos; }
     inline const glm::mat4& GetView() const { return m_ViewMatrix; }
     inline const glm::mat4& GetProj() const { return m_ProjMatrix; }
+    inline const glm::vec3& GetFront() const { return m_CamFront; }
 
     inline const float GetFOV() const { return m_FOV; }
     inline const float GetYaw() const { return m_Yaw; }

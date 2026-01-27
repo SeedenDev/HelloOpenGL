@@ -1,12 +1,12 @@
 #include "LightSource.h"
 
-LightSource::LightSource(glm::vec3 position, glm::vec3 ambientColor, glm::vec3 diffuseColor, glm::vec3 specularColor)
-	: m_Position(position), m_AmbientColor(ambientColor), m_DiffuseColor(diffuseColor), m_SpecularColor(specularColor), m_DebugCube(Cube(glm::vec3(0.0f)))
+LightSource::LightSource(const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor)
+	: m_AmbientColor(ambientColor), m_DiffuseColor(diffuseColor), m_SpecularColor(specularColor)
 {
 	
 }
 
-void LightSource::DrawDebugCube(Shader& shader, const glm::mat4 view, const glm::mat4 projection) const
+void LightSource::DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const
 {
 	glm::mat4 model = m_DebugCube.GetModelMatrix();
 	glm::mat4 MVP = projection * view * model;
@@ -20,7 +20,7 @@ void LightSource::DrawDebugCube(Shader& shader, const glm::mat4 view, const glm:
 
 void LightSource::ImGuiDebugDraw()
 {
-	if (ImGui::SliderFloat3("Position", &m_Position[0], -15.0f, 15.0f)) SetPosition(m_Position); //TODO: =update the model matrix.. (have to change the way it works really I hate this Cube class)
+	ImGui::Checkbox("Toggle", &m_Toggle);
 	ImGui::ColorEdit3("AmbientColor", &m_AmbientColor[0]);
 	ImGui::ColorEdit3("DiffuseColor", &m_DiffuseColor[0]);
 	ImGui::ColorEdit3("SpecularColor", &m_SpecularColor[0]);

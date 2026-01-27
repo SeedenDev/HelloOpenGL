@@ -26,3 +26,45 @@ namespace MathUtil
 {
     glm::mat4 ComputeModelMatrix(Geometry::Transform3D transform);
 }
+
+//TODO: I don't know how to name it better neither what a name a file that contains them could be so it's here for now
+namespace Common
+{
+    class HasPosition
+    {
+    protected:
+        glm::vec3 m_Position = glm::vec3(0.0f);
+
+    public:
+
+        void SetPosition(const glm::vec3& position)
+        {
+            m_Position = position;
+            OnPositionUpdate(position);
+        }
+        inline const glm::vec3& GetPosition() const { return m_Position; }
+
+    protected:
+
+        virtual void OnPositionUpdate(const glm::vec3& position) {}
+    };
+
+    class HasDirection
+    {
+    protected:
+        glm::vec3 m_Direction = glm::vec3(0.0f);
+
+    public:
+
+        void SetDirection(const glm::vec3& direction)
+        {
+            m_Direction = direction;
+            OnDirectionUpdate(direction);
+        }
+        inline const glm::vec3& GetDirection() const { return m_Direction; }
+
+    protected:
+
+        virtual void OnDirectionUpdate(const glm::vec3& direction) {}
+    };
+}

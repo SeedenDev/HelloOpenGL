@@ -26,6 +26,8 @@
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "Spotlight.h"
+#include "Flashlight.h"
+#include "GlobalLight.h"
 
 int main(void)
 {
@@ -84,12 +86,14 @@ int main(void)
     // Scene part
     Camera camera(appWindow.GetWindowPointer(), appWindow.GetAspectRatio());
 
+    //TODO: add again the possibility of having 2D draw on screen like HUD
+
     Square square(glm::vec3(0.0f), glm::vec3(0.3f, 0.0f, 0.8f));
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     square.SetScale(glm::vec3(0.5f));
 
-    Material mat1(glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(0.8f, 0.8f, 0.8f), 64);
-    glm::vec3 cubePositions[] = {
+    Material mat1(glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(0.8f, 0.8f, 0.8f), 64);//TODO: mat for each cube (better: mat list and select one in cube data)
+    Cube cubes[] = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),
         glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -99,24 +103,33 @@ int main(void)
         glm::vec3(1.3f, -2.0f, -2.5f),
         glm::vec3(1.5f,  2.0f, -2.5f),
         glm::vec3(1.5f,  0.2f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
+        glm::vec3(-1.3f,  1.0f, -1.5f),
+        glm::vec3(0.0f, 1.5f, 0.0f)
     };
-    Cube cube1(glm::vec3(0.0f, 1.5f, 0.0f));
+
+    //TODO: not sure about this shit lmao, surely there is a way to do it on the stack
+    LightSource* lights[] = {
+        new GlobalLight(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+
+        new DirectionalLight(glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new DirectionalLight(glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+
+        new PointLight(glm::vec3(0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new PointLight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new PointLight(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new PointLight(glm::vec3(0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+
+        new Spotlight(glm::vec3(0.7f,  0.2f,  2.0f), glm::vec3(0.3f, 0.3f, 0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new Spotlight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(-0.3f, -0.3f, -0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+        new Spotlight(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.9f, -0.3f, 0.2f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
+
+        new Flashlight(camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f))
+    };
 
     float fogMinDist = 20.0f;
     float fogMaxDist = 100.0f;
     bool enableFog = 0;
     bool enableMsaa = 1;
-    bool moveLight = 1;
-    int lightType = 0;
-    const char* lightTypes[] = { "Global", "Directional", "Point", "Spot" };
-
-    LightSource globalLightSource(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f));
-    DirectionalLight directionalLightSource(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f));
-    PointLight pointLightSource(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f));
-    Spotlight spotlightSource(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f));
-    //TODO: flashlight = Spot+Point => attenuation with distance (maybe just attenuation for any spotlight too)
-    double lightRotationRadius = 2.0f;
 
     while (!appWindow.ShouldClose())
     {
@@ -192,61 +205,75 @@ int main(void)
 
             basicLightningShader.Bind();
             basicLightningShader.SetUniformMat4f("u_View", view);
-            model = cube1.GetModelMatrix();
-            MVP = projection * view * model;
-            basicLightningShader.SetUniformMat4f("u_Model", model);
-            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
+            basicLightningShader.SetUniformMat4f("u_Projection", projection);
             basicLightningShader.SetUniform1f("u_FogEnabled", enableFog);
             basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
             basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
             basicLightningShader.SetUniform1f("u_Time", currentTime); // for emission texture cool animation
             basicLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
-            basicLightningShader.SetUniform1i("material.diffuseMap", 10); // set value for now
-            basicLightningShader.SetUniform1i("material.specularMap", 11); // set value for now
-            basicLightningShader.SetUniform1i("material.emissionMap", 12); // set value for now
-            basicLightningShader.SetUniform1f("material.shininess", mat1.GetSpecularShininess());
-            basicLightningShader.SetUniform1ui("light.type", lightType);
-            LightSource* lightSource = nullptr;
-            switch (lightType)
-            {
-            default:
-            case 0:
-                lightSource = &globalLightSource;
-                basicLightningShader.SetUniformVec3f("light.position", globalLightSource.GetPosition());
-                break;
-            case 1:
-                lightSource = &directionalLightSource;
-                basicLightningShader.SetUniformVec3f("light.direction", directionalLightSource.GetDirection());
-                break;
-            case 2:
-                lightSource = &pointLightSource;
-                basicLightningShader.SetUniformVec3f("light.position", pointLightSource.GetPosition());
-                basicLightningShader.SetUniform1f("light.constant", pointLightSource.GetConstant());
-                basicLightningShader.SetUniform1f("light.linear", pointLightSource.GetLinear());
-                basicLightningShader.SetUniform1f("light.quadratic", pointLightSource.GetQuadratic());
-                break;
-            case 3:
-                lightSource = &spotlightSource;
-                //TODO: For flashlight
-                //spotlightSource.SetPosition(camera.GetPosition());
-                //spotlightSource.SetDirection(camera.GetFront());
-                basicLightningShader.SetUniformVec3f("light.position", spotlightSource.GetPosition());
-                basicLightningShader.SetUniformVec3f("light.direction", spotlightSource.GetDirection());
-                basicLightningShader.SetUniform1f("light.innerCutOff", spotlightSource.GetComputedInnerCutOff());
-                basicLightningShader.SetUniform1f("light.outerCutOff", spotlightSource.GetComputedOuterCutOff());
-            }
-            basicLightningShader.SetUniformVec3f("light.ambient", lightSource->GetAmbientColor());
-            basicLightningShader.SetUniformVec3f("light.diffuse", lightSource->GetDiffuseColor());
-            basicLightningShader.SetUniformVec3f("light.specular", lightSource->GetSpecularColor());
-            cube1.Draw();
+            basicLightningShader.SetUniform1i("u_Material.diffuseMap", 10); // set value for now
+            basicLightningShader.SetUniform1i("u_Material.specularMap", 11); // set value for now
+            basicLightningShader.SetUniform1i("u_Material.emissionMap", 12); // set value for now
+            basicLightningShader.SetUniform1f("u_Material.shininess", mat1.GetSpecularShininess());
 
-            // very bad because: 1° it's not instanced rendering 2° it's even worst bc it creates several objects each frame
-            for (unsigned int i = 0; i < 10; i++)
+            //TODO: it can surely be upgraded. Mostly thinking about the interface casts (btw read that CPP casts are now faster that C-style ones on modern compiler so..)
+            // also maybe just a GetType() in LightSource returning the subclass instance so there is no cast here (and also a GetName() for the uniform?)
+            int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
+            for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
             {
-                Cube cube(glm::vec3(0.0f));
-                cube.SetPosition(cubePositions[i]);
+                LightSource* light = lights[i];
+                if (!light->IsToggled()) continue;
+
+                // may be a way to do it with char* but i'm very tired rn
+                std::string uniform;
+
+                // also kinda dangerous because these variables are also accessible from the other if
+                if (GlobalLight* gl = dynamic_cast<GlobalLight*>(light))
+                {
+                    uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
+                    basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
+                    globalLightCount++;
+                }
+                else if (DirectionalLight* dl = dynamic_cast<DirectionalLight*>(light))
+                {
+                    uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
+                    basicLightningShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
+                    directionalLightCount++;
+                }
+                else if (PointLight* pl = dynamic_cast<PointLight*>(light))
+                {
+                    uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
+                    basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
+                    basicLightningShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
+                    basicLightningShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
+                    basicLightningShader.SetUniform1f(uniform + ".quadratic", pl->GetQuadratic());
+                    pointLightCount++;
+                }
+                else if (Spotlight* sl = dynamic_cast<Spotlight*>(light))
+                {
+                    uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
+                    basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
+                    basicLightningShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
+                    basicLightningShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
+                    basicLightningShader.SetUniform1f(uniform + ".outerCutOff", sl->GetComputedOuterCutOff());
+                    spotlightCount++;
+                }
+
+                basicLightningShader.SetUniformVec3f(uniform + ".ambient", light->GetAmbientColor());
+                basicLightningShader.SetUniformVec3f(uniform + ".diffuse", light->GetDiffuseColor());
+                basicLightningShader.SetUniformVec3f(uniform + ".specular", light->GetSpecularColor());
+            }
+            basicLightningShader.SetUniform1i("u_GlobalLightCount", globalLightCount);
+            basicLightningShader.SetUniform1i("u_DirectionalLightCount", directionalLightCount);
+            basicLightningShader.SetUniform1i("u_PointLightCount", pointLightCount);
+            basicLightningShader.SetUniform1i("u_SpotlightCount", spotlightCount);
+
+            // very bad because it's not instanced rendering
+            for (unsigned int i = 0; i < sizeof(cubes) / sizeof(Cube); i++)
+            {
+                Cube& cube = cubes[i];
                 float angle = 20.0f * i;
-                cube.SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5)); model = cube1.GetModelMatrix();
+                cube.SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                 model = cube.GetModelMatrix();
                 MVP = projection * view * model;
                 basicLightningShader.SetUniformMat4f("u_Model", model);
@@ -256,49 +283,56 @@ int main(void)
             basicLightningShader.Unbind();
 
             lightSourceShader.Bind();
-            if(moveLight && lightType!=3) lightSource->SetPosition(glm::vec3(lightRotationRadius*cos(currentTime), 1.5f+sin(currentTime), lightRotationRadius * sin(currentTime)));
-            lightSource->DrawDebugCube(lightSourceShader, view, projection);
+            //TODO: Okay i really hate this code but it's late so Ill clean it later rn i don't want to think about how to avoid 2 light for-loops but 1 = shader rebindings in loop to setUniform+draw
+            // last second thought before pushing: maybe just combine the two shaders and a param "IsLightSource" to skip everything in the fragment shader
+            for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
+            {
+                LightSource* light = lights[i];
+                if(light->IsToggled()) light->DrawDebugCube(lightSourceShader, view, projection);
+            }
             lightSourceShader.Unbind();
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             {
-                glm::vec3 cubeScale(cube1.GetScale());
+                //TODO: scene editor to have tabs for Cubes & Lights and clickable items to edit their 
                 ImGui::Begin("Scene editor");
+                /*
                 ImGui::Combo("LightType", &lightType, lightTypes, 4);
                 bool lightOpen = ImGui::TreeNode("Light");
                 if (lightOpen)
                 {
-                    ImGui::Checkbox("Move", &moveLight);
                     lightSource->ImGuiDebugDraw();
                     ImGui::TreePop();
                 }
                 bool cubeOpen = ImGui::TreeNode("Cube");
                 if (cubeOpen)
                 {
-                    ImGui::SliderFloat3("Size", &cubeScale[0], 0.5f, 10000.0f);
+                    glm::vec3 cubeScale(cube1.GetScale());
+                    if (ImGui::SliderFloat3("Size", &cubeScale[0], 0.5f, 10000.0f)) cube1.SetScale(cubeScale);
                     //ImGui::ColorEdit3("AmbientColor", &mat1.GetAmbientColor()[0]);
                     //ImGui::ColorEdit3("DiffuseColor", &mat1.GetDiffuseColor()[0]);
                     //ImGui::ColorEdit3("SpecularColor", &mat1.GetSpecularColor()[0]);
                     ImGui::SliderFloat("SpecShininess", &mat1.GetSpecularShininess(), 0.0f, 512.0f);
                     ImGui::TreePop();
                 }
+                */
                 const glm::vec3& camPos = camera.GetPosition();
                 ImGui::Text("Camera: %.2f;%.2f;%.2f (%.2f;%.2f) - FOV: %.1f", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch(), camera.GetFOV());
                 float camSpeed[] = { camera.GetHorizontalSpeed(), camera.GetVerticalSpeed() };
-                ImGui::SliderFloat2("CamSpeed", camSpeed, 0.0f, 1000.0f);
+                if (ImGui::SliderFloat2("CamSpeed", camSpeed, 0.0f, 1000.0f))
+                {
+                    camera.SetHorizontalSpeed(camSpeed[0]);
+                    camera.SetVerticalSpeed(camSpeed[1]);
+                }
                 ImGui::Checkbox("Fog", &enableFog);
                 ImGui::SliderFloat("FogMin", &fogMinDist, 0.0f, 1000.0f);
                 ImGui::SliderFloat("FogMax", &fogMaxDist, 0.0f, 1000.0f);
                 ImGui::Checkbox("MSAA", &enableMsaa);
                 float imguiFps = ImGui::GetIO().Framerate;
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0/imguiFps, imguiFps);
-                ImGui::End();
-
-                cube1.SetScale(cubeScale);
-                camera.SetHorizontalSpeed(camSpeed[0]);
-                camera.SetVerticalSpeed(camSpeed[1]);
+                ImGui::End();                
             }
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

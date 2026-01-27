@@ -1,24 +1,15 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-
 #include "LightSource.h"
 
-class Spotlight : public LightSource
+class Spotlight : public LightSource, public Common::HasPosition, public Common::HasDirection
 {
 private:
-	glm::vec3 m_Direction;
 	float m_InnerCutOff; // angle in degree of the light cone
 	float m_OuterCutOff; // same but upper for some fading between lit/unlit part (smooth edges)
 
 public:
-	Spotlight(glm::vec3 position, glm::vec3 direction, glm::vec3 ambientColor, glm::vec3 diffuseColor, glm::vec3 specularColor);
-
-	void SetDirection(glm::vec3 direction)
-	{
-		m_Direction = direction;
-	}
-	inline const glm::vec3& GetDirection() const { return m_Direction; }
+	Spotlight(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
 	void SetInnerCutOff(float cutOff)
 	{
@@ -33,6 +24,8 @@ public:
 	}
 	inline const float GetOuterCutOff() const { return m_OuterCutOff; }
 	inline const float GetComputedOuterCutOff() const { return glm::cos(glm::radians(m_OuterCutOff)); }
+
+	void OnPositionUpdate(const glm::vec3& position) override;
 
 	void ImGuiDebugDraw() override;
 };

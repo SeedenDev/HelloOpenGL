@@ -1,10 +1,8 @@
 #pragma once
 
-#include <glm/vec3.hpp>
+#include "GlobalLight.h"
 
-#include "LightSource.h"
-
-class PointLight : public LightSource
+class PointLight : public GlobalLight
 {
 private:
 	// Attenuation parameters
@@ -13,7 +11,7 @@ private:
 	float m_Quadratic;
 
 public:
-	PointLight(glm::vec3 position, glm::vec3 ambientColor, glm::vec3 diffuseColor, glm::vec3 specularColor);
+	PointLight(const glm::vec3& position, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
 	void SetConstant(float constant)
 	{
@@ -32,6 +30,4 @@ public:
 		m_Quadratic = quadratic;
 	}
 	inline const float GetQuadratic() const { return m_Quadratic; }
-
-	void ImGuiDebugDraw() override;
 };

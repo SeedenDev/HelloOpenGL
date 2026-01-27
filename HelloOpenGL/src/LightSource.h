@@ -7,30 +7,25 @@
 class LightSource : ImGuiDebugInterface
 {
 private:
-	glm::vec3 m_Position; //TODO: remove from it and create a class Positionable/Directable
+	bool m_Toggle = 1;
 
 	glm::vec3 m_AmbientColor;
 	glm::vec3 m_DiffuseColor;
 	glm::vec3 m_SpecularColor;
 
 protected:
-	Cube m_DebugCube;
+	Cube m_DebugCube = Cube(glm::vec3(0.0f));
 
 public:
-	LightSource(glm::vec3 position, glm::vec3 ambientColor, glm::vec3 diffuseColor, glm::vec3 specularColor);
+	LightSource(const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	virtual void SetPosition(glm::vec3 position)
-	{
-		m_Position = position;
-		m_DebugCube.SetPosition(position);
-	}
-	inline const glm::vec3& GetPosition() const { return m_Position; }
+	const bool IsToggled() const { return m_Toggle; }
 
 	inline const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
 	inline const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
 	inline const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
 
-	void DrawDebugCube(Shader& shader, const glm::mat4 view, const glm::mat4 projection) const;
+	void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
 
 	void ImGuiDebugDraw() override;
 };

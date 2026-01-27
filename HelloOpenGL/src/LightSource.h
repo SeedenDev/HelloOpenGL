@@ -1,8 +1,14 @@
 #pragma once
 
+#include <type_traits>
+
 #include "ImGuiDebugInterface.h"
 #include "Cube.h"
 #include "Shader.h"
+
+enum LightType {
+	GLOBAL, DIRECTIONAL, POINT, SPOTLIGHT, FLASHLIGHT
+};
 
 class LightSource : ImGuiDebugInterface
 {
@@ -28,4 +34,6 @@ public:
 	void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
 
 	void ImGuiDebugDraw() override;
+
+	virtual const LightType GetType() = 0;
 };

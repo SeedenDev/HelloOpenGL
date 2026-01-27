@@ -11,7 +11,7 @@ class Shader
 {
 private:
     std::string m_VertexShaderPath, m_FragmentShaderPath;
-    unsigned int m_RendererID;
+    unsigned int m_HandlerID;
     std::unordered_map<std::string, int> m_UniformLocations;
 
 public:
@@ -31,6 +31,8 @@ public:
 
 	void Bind() const;
 	void Unbind() const;
+
+    const unsigned int GetHandlerID() const { return m_HandlerID; }
 
 private:
     std::string ParseShaderFile(const std::string& filepath);

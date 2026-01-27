@@ -12,4 +12,9 @@ public:
 	void OnDirectionUpdate(const glm::vec3& direction) override;
 
 	void ImGuiDebugDraw() override;
+
+	const LightType GetType() override
+	{
+		return LightType::DIRECTIONAL;
+	}
 };

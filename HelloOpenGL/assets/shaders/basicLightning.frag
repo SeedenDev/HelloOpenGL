@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 out vec4 outColor;
 
@@ -33,7 +33,10 @@ struct Light
 };
 //TODO: not fixed values
 uniform int u_GlobalLightCount;
-uniform Light u_GlobalLights[10];
+layout(std430, binding=0) buffer u_GlobalLightsBuffer
+{
+    Light u_GlobalLights[];
+};
 uniform int u_DirectionalLightCount;
 uniform Light u_DirectionalLights[10];
 uniform int u_PointLightCount;

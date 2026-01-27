@@ -28,4 +28,9 @@ public:
 	void OnPositionUpdate(const glm::vec3& position) override;
 
 	void ImGuiDebugDraw() override;
+
+	const LightType GetType() override
+	{
+		return LightType::SPOTLIGHT;
+	}
 };

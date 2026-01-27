@@ -5,12 +5,12 @@
 Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
     : m_VertexShaderPath(vertexShaderPath), m_FragmentShaderPath(fragmentShaderPath)
 {
-    m_RendererID = CreateProgram(vertexShaderPath, fragmentShaderPath);
+    m_HandlerID = CreateProgram(vertexShaderPath, fragmentShaderPath);
 }
 
 Shader::~Shader()
 {
-    glDeleteProgram(m_RendererID);
+    glDeleteProgram(m_HandlerID);
 }
 
 void Shader::Reload()
@@ -21,8 +21,8 @@ void Shader::Reload()
         std::cout << "Error: reloading shader program failed!" << std::endl;
         return;
     }
-    glDeleteProgram(m_RendererID);
-    m_RendererID = rendererID;
+    glDeleteProgram(m_HandlerID);
+    m_HandlerID = rendererID;
 }
 
 void Shader::SetUniform1i(const std::string& name, int v0)
@@ -67,7 +67,7 @@ void Shader::SetUniform1ui(const std::string& name, unsigned int v0)
 
 void Shader::Bind() const
 {
-    glUseProgram(m_RendererID);
+    glUseProgram(m_HandlerID);
 }
 
 void Shader::Unbind() const
@@ -146,7 +146,7 @@ int Shader::GetUniformLocation(const std::string& name)
 {
     if (auto x = m_UniformLocations.find(name); x != m_UniformLocations.end()) return x->second;
     
-    int location = glGetUniformLocation(m_RendererID, name.c_str());
+    int location = glGetUniformLocation(m_HandlerID, name.c_str());
     if (location == -1)
         std::cout << "Warning: uniform " << name << " not found!" << std::endl;
 

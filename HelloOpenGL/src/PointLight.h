@@ -30,4 +30,11 @@ public:
 		m_Quadratic = quadratic;
 	}
 	inline const float GetQuadratic() const { return m_Quadratic; }
+
+	void ImGuiDebugDraw() override;
+
+	const LightType GetType() override
+	{
+		return LightType::POINT;
+	}
 };

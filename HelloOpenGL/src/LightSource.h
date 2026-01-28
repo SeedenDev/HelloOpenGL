@@ -1,19 +1,30 @@
 #pragma once
 
 #include <type_traits>
+#include <string>
 
 #include "ImGuiDebugInterface.h"
 #include "Cube.h"
 #include "Shader.h"
 
-enum LightType {
-	GLOBAL, DIRECTIONAL, POINT, SPOTLIGHT, FLASHLIGHT
-};
+namespace LightType
+{
+	enum LightType {
+		GLOBAL, DIRECTIONAL, POINT, SPOTLIGHT, FLASHLIGHT
+	};
+
+	static const std::string typeNames[] = { "Global", "Directional", "Point", "Spotlight", "Flashlight" };
+
+	static const std::string& GetTypeString(LightType type)
+	{
+		return typeNames[type];
+	}
+}
 
 class LightSource : ImGuiDebugInterface
 {
 private:
-	bool m_Toggle = 1;
+	bool m_Toggle = 0;
 
 	glm::vec3 m_AmbientColor;
 	glm::vec3 m_DiffuseColor;
@@ -31,9 +42,9 @@ public:
 	inline const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
 	inline const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
 
-	void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
+	virtual void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
 
 	void ImGuiDebugDraw() override;
 
-	virtual const LightType GetType() = 0;
+	virtual const LightType::LightType GetType() = 0;
 };

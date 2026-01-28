@@ -18,11 +18,11 @@ uniform Material u_Material;
 
 struct Light 
 {
-    vec3 position; // with global/point/spot
-    vec3 direction; // with directional/spot
-    vec3 ambient; // usually low intensity because it's ambient lightning
-    vec3 diffuse; // the exact color of the light
-    vec3 specular; // shining intensity
+    vec4 position; // with global/point/spot
+    vec4 direction; // with directional/spot
+    vec4 ambient; // usually low intensity because it's ambient lightning
+    vec4 diffuse; // the exact color of the light
+    vec4 specular; // shining intensity
     // point light attenuation parameters
     float constant;
     float linear;
@@ -30,19 +30,25 @@ struct Light
     // spotlight radius
     float innerCutOff;
     float outerCutOff;
+    float type; // 0=global ; 1=dir ; 2=point ; 3=spot ; 4=flash
+    float a;
+    float b;
 };
-//TODO: not fixed values
-uniform int u_GlobalLightCount;
-layout(std430, binding=0) buffer u_GlobalLightsBuffer
+
+uniform int u_LightCount;
+layout(std430) buffer u_LightsBuffer
 {
-    Light u_GlobalLights[];
+    Light u_Lights[];
 };
+/*
+uniform int u_GlobalLightCount;
+uniform Light u_GlobalLights[10];
 uniform int u_DirectionalLightCount;
 uniform Light u_DirectionalLights[10];
 uniform int u_PointLightCount;
 uniform Light u_PointLights[10];
 uniform int u_SpotlightCount;
-uniform Light u_Spotlights[10];
+uniform Light u_Spotlights[10];*/
 
 uniform vec3 u_CameraPos;
 uniform float u_Time;
@@ -64,8 +70,6 @@ vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec
 vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
 vec3 CalcAttenuationSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
 
-#define LIGHT(type) for(int i = 0; i < u_##type##LightCount; i++) finalColor += Calc##type##Light(u_GlobalLights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
-
 void main()
 {
     vec3 materialBaseColor = texture(u_Material.diffuseMap, vertexTex).rgb;
@@ -82,10 +86,20 @@ void main()
 
     vec3 resultColor = vec3(0);
 
+    for(int i = 0; i < u_LightCount; i++)
+    {
+        Light light = u_Lights[i];
+        if(light.type==0) resultColor += CalcGlobalLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+        else if(light.type==1) resultColor += CalcDirLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+        else if(light.type==2) resultColor += CalcPointLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+        else if(light.type==3 || light.type==4) resultColor += CalcSpotlight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+    }
+    /*
     for(int i = 0; i < u_GlobalLightCount; i++) resultColor += CalcGlobalLight(u_GlobalLights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     for(int i = 0; i < u_DirectionalLightCount; i++) resultColor += CalcDirLight(u_DirectionalLights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     for(int i = 0; i < u_PointLightCount; i++) resultColor += CalcPointLight(u_PointLights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     for(int i = 0; i < u_SpotlightCount; i++) resultColor += CalcSpotlight(u_Spotlights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+    */
 
     vec4 finalColor = vec4(resultColor + materialEmissionColor, 1.0);
 
@@ -103,47 +117,47 @@ void main()
 // Light types
 vec3 CalcGlobalLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
-    vec3 lightFragDir = normalize(light.position - vertexWorldPos);
-    vec3 ambient = CalcAmbient(light.ambient, materialAmbient);
-    vec3 diffuse = CalcDiffuse(light.diffuse, materialDiffuse, normal, lightFragDir);
-    vec3 specular = CalcSpecular(light.specular, materialSpecular, normal, lightFragDir, viewDir);
+    vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
+    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec3 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec3 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
     return ambient + diffuse + specular;
 }
 vec3 CalcDirLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = normalize(light.direction);
-    vec3 ambient = CalcAmbient(light.ambient, materialAmbient);
-    vec3 diffuse = CalcDiffuse(light.diffuse, materialDiffuse, normal, lightDir);
-    vec3 specular = CalcSpecular(light.specular, materialSpecular, normal, lightDir, viewDir);
+    vec3 lightDir = normalize(light.direction.xyz);
+    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec3 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightDir);
+    vec3 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightDir, viewDir);
     return ambient + diffuse + specular;
 }
 vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
-    vec3 lightFragDir = light.position - vertexWorldPos;
+    vec3 lightFragDir = light.position.xyz - vertexWorldPos;
     float lightDist = length(lightFragDir);
     lightFragDir = normalize(lightFragDir);
     float attenuation = 1.0 / (light.constant + light.linear * lightDist + light.quadratic * (lightDist*lightDist));
 
-    vec3 ambient = attenuation * CalcAmbient(light.ambient, materialAmbient);
-    vec3 diffuse = attenuation * CalcDiffuse(light.diffuse, materialDiffuse, normal, lightFragDir);
-    vec3 specular = attenuation * CalcSpecular(light.specular, materialSpecular, normal, lightFragDir, viewDir);
+    vec3 ambient = attenuation * CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec3 diffuse = attenuation * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec3 specular = attenuation * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
     return ambient + diffuse + specular;
 }
 vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
-    vec3 lightFragDir = normalize(light.position - vertexWorldPos);
+    vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
 
-    float theta = dot(lightFragDir, normalize(-light.direction));
+    float theta = dot(lightFragDir, normalize(-light.direction.xyz));
     // Testing if the spot should lit the fragment
-    if(theta <= light.innerCutOff && theta <= light.outerCutOff) return CalcAmbient(light.ambient, materialAmbient);
+    if(theta <= light.innerCutOff && theta <= light.outerCutOff) return CalcAmbient(light.ambient.rgb, materialAmbient);
 
     // Then calc the fading
     float epsilon = light.innerCutOff - light.outerCutOff;
     float lightIntensity = clamp((theta-light.outerCutOff)/epsilon, 0.0, 1.0);
 
-    vec3 ambient = CalcAmbient(light.ambient, materialAmbient);
-    vec3 diffuse = lightIntensity * CalcDiffuse(light.diffuse, materialDiffuse, normal, lightFragDir);
-    vec3 specular = lightIntensity * CalcSpecular(light.specular, materialSpecular, normal, lightFragDir, viewDir);
+    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec3 diffuse = lightIntensity * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec3 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
 
     return ambient + diffuse + specular;
 }

@@ -33,7 +33,7 @@ public:
 
 	void ImGuiDebugDraw() override;
 
-	const LightType GetType() override
+	const LightType::LightType GetType() override
 	{
 		return LightType::POINT;
 	}

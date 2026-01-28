@@ -6,12 +6,27 @@
 class Flashlight : public Spotlight
 {
 private:
-	Camera& m_TrackedCamera;
+	Camera* m_TrackedCamera;
 
 public:
-	Flashlight(Camera& trackedCamera, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
+	Flashlight(Camera* trackedCamera, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	//TODO: THAT DOESNT WORK AT ALL
-	inline const glm::vec3& GetPosition() const { return m_TrackedCamera.GetPosition(); }
-	inline const glm::vec3& GetDirection() const { return m_TrackedCamera.GetFront(); }
+	inline const glm::vec3& GetPosition()
+	{
+		m_Position = m_TrackedCamera->GetPosition();
+		return m_Position;
+	}
+	inline const glm::vec3& GetDirection() 
+	{ 
+		m_Direction = m_TrackedCamera->GetFront();
+		return m_Direction;
+	}
+
+	//Note: cancel the cube drawing
+	void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const override { }
+
+	const LightType::LightType GetType() override
+	{
+		return LightType::FLASHLIGHT;
+	}
 };

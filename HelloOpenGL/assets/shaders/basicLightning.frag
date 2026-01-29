@@ -143,6 +143,13 @@ vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec
     vec3 specular = attenuation * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
     return ambient + diffuse + specular;
 }
+
+uniform mat4 u_View;
+uniform mat4 u_Projection;
+in vec4 vertexScreenPos;
+in vec4 vertexBasePos;
+uniform sampler2D u_SpotlightTexture;
+
 vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
@@ -158,6 +165,18 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
     vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
     vec3 diffuse = lightIntensity * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
     vec3 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
+
+    // Texture projection
+    vec4 textureProjection = (u_Projection * u_View * light.position) * vec4(vertexWorldPos, 1.0);
+    textureProjection /= textureProjection.w; // rasterize the projection space
+    textureProjection = textureProjection * 0.5 + 0.5; // clip it [0;1] range
+    vec2 textureCoords = textureProjection.xy;//clamp(textureProjection.xy, vec2(0), vec2(1));
+
+    bool inFrustum = all(greaterThanEqual(textureCoords, vec2(0.0))) && all(lessThanEqual(textureCoords, vec2(1.0)));
+
+    //vec2 fragCoord = (gl_FragCoord.xy / vec2(1920, 1017));
+
+    vec3 spotTexture = lightIntensity * vec3(texture(u_SpotlightTexture, textureCoords));
 
     return ambient + diffuse + specular;
 }

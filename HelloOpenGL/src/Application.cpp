@@ -65,6 +65,11 @@ int main(void)
     // Light part
     Shader lightSourceShader("assets/shaders/lightSource.vert", "assets/shaders/simpleColor.frag");
     Shader basicLightningShader("assets/shaders/basicLightning.vert", "assets/shaders/basicLightning.frag");
+    basicLightningShader.Bind();
+    Texture spotlightTexture("assets/textures/test2.png");
+    spotlightTexture.Bind(5);
+    basicLightningShader.SetUniform1i("u_SpotlightTexture", 5);
+    basicLightningShader.Unbind();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
@@ -73,7 +78,7 @@ int main(void)
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
     double fpsCount = 60.0;
     double fpsLimit = 1.0 / fpsCount;
-    bool unlimitedFPS = 1;
+    bool unlimitedFPS = 0;
     if (unlimitedFPS || fpsCount!=60.0)
         appWindow.ToggleVsync();
 
@@ -117,7 +122,7 @@ int main(void)
     lightsStack.emplace_back(new PointLight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
     lightsStack.emplace_back(new PointLight(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
     lightsStack.emplace_back(new PointLight(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new Spotlight(glm::vec3(0.7f, 0.2f, 2.0f), glm::vec3(0.3f, 0.3f, 0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsStack.emplace_back(new Spotlight(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
     lightsStack.emplace_back(new Spotlight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(-0.3f, -0.3f, -0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
     lightsStack.emplace_back(new Spotlight(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.9f, -0.3f, 0.2f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
     lightsStack.emplace_back(new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));

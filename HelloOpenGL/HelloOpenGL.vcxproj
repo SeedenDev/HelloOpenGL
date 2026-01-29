@@ -655,6 +655,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\container_diffuse.png" />
+    <Image Include="assets\textures\container_emission.png" />
     <Image Include="assets\textures\container_specular.png" />
     <Image Include="assets\textures\test.png" />
     <Image Include="assets\textures\test1.png" />

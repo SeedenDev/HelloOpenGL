@@ -11,7 +11,6 @@ struct Material
     sampler2D diffuseMap; // stores both ambient&diffuse color as the object texture
     sampler2D specularMap; // used for specular sampling
     sampler2D emissionMap; // emission = glowing even if not lit
-    vec3 specular; // color of specular highlight or reflect a surface-specific color
     float shininess; // scattering
 };
 uniform Material u_Material;
@@ -75,9 +74,9 @@ void main()
     vec3 materialBaseColor = texture(u_Material.diffuseMap, vertexTex).rgb;
     vec3 materialSpecularIntensity = texture(u_Material.specularMap, vertexTex).rgb;
     //TODO: see if emission should really have a mask depending on the specular in any situation or if it just here (thinking about animated textures, seems a great challenge with emission)
-    vec3 materialEmissionColor = texture(u_Material.emissionMap, vertexTex+vec2(0, u_Time)).rgb;
+    /*vec3 materialEmissionColor = texture(u_Material.emissionMap, vertexTex+vec2(0, u_Time)).rgb;
     vec3 emissionMask = step(vec3(1), vec3(1)-materialSpecularIntensity);
-    materialEmissionColor *= emissionMask;
+    materialEmissionColor *= emissionMask;*/
 
     vec3 normal = normalize(vertexComputedNormal);
     vec3 viewDir = vertexWorldPos - u_CameraPos;
@@ -101,7 +100,7 @@ void main()
     for(int i = 0; i < u_SpotlightCount; i++) resultColor += CalcSpotlight(u_Spotlights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     */
 
-    vec4 finalColor = vec4(resultColor + materialEmissionColor, 1.0);
+    vec4 finalColor = vec4(resultColor, 1.0);
 
     // Fog test (to move to a special shader when I know how to combine shaders without having to do 2 draw calls)
     if(u_FogEnabled)
@@ -144,12 +143,13 @@ vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec
     return ambient + diffuse + specular;
 }
 
+/*
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 in vec4 vertexScreenPos;
 in vec4 vertexBasePos;
 uniform sampler2D u_SpotlightTexture;
-
+*/
 vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
@@ -167,7 +167,7 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
     vec3 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
 
     // Texture projection
-    vec4 textureProjection = (u_Projection * u_View * light.position) * vec4(vertexWorldPos, 1.0);
+    /*vec4 textureProjection = (u_Projection * u_View * light.position) * vec4(vertexWorldPos, 1.0);
     textureProjection /= textureProjection.w; // rasterize the projection space
     textureProjection = textureProjection * 0.5 + 0.5; // clip it [0;1] range
     vec2 textureCoords = textureProjection.xy;//clamp(textureProjection.xy, vec2(0), vec2(1));
@@ -176,7 +176,7 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
 
     //vec2 fragCoord = (gl_FragCoord.xy / vec2(1920, 1017));
 
-    vec3 spotTexture = lightIntensity * vec3(texture(u_SpotlightTexture, textureCoords));
+    vec3 spotTexture = lightIntensity * vec3(texture(u_SpotlightTexture, textureCoords));*/
 
     return ambient + diffuse + specular;
 }

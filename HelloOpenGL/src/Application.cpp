@@ -22,13 +22,14 @@
 #include "Square.h"
 #include "Cube.h"
 #include "Input.h"
-#include "LightSource.h"
+#include "Lights/LightSource.h"
 #include "Material.h"
-#include "DirectionalLight.h"
-#include "PointLight.h"
-#include "Spotlight.h"
-#include "Flashlight.h"
-#include "GlobalLight.h"
+#include "Lights/DirectionalLight.h"
+#include "Lights/PointLight.h"
+#include "Lights/Spotlight.h"
+#include "Lights/Flashlight.h"
+#include "Lights/GlobalLight.h"
+#include "Model/ModelLoader.h"
 
 int main(void)
 {
@@ -65,11 +66,15 @@ int main(void)
     // Light part
     Shader lightSourceShader("assets/shaders/lightSource.vert", "assets/shaders/simpleColor.frag");
     Shader basicLightningShader("assets/shaders/basicLightning.vert", "assets/shaders/basicLightning.frag");
-    basicLightningShader.Bind();
+    /*basicLightningShader.Bind();
     Texture spotlightTexture("assets/textures/test2.png");
     spotlightTexture.Bind(5);
     basicLightningShader.SetUniform1i("u_SpotlightTexture", 5);
-    basicLightningShader.Unbind();
+    basicLightningShader.Unbind();*/
+
+    // Model loading tests
+    Shader modelLightningShader("assets/shaders/modelLightning.vert", "assets/shaders/modelLightning.frag");
+    Model backpackModel("assets/models/columbina/columbina.obj", 0);
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
@@ -78,7 +83,7 @@ int main(void)
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
     double fpsCount = 60.0;
     double fpsLimit = 1.0 / fpsCount;
-    bool unlimitedFPS = 0;
+    bool unlimitedFPS = 1;
     if (unlimitedFPS || fpsCount!=60.0)
         appWindow.ToggleVsync();
 
@@ -152,6 +157,16 @@ int main(void)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, lightsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Dying for this duplicated code but i just want to test
+    GLuint modelSsbLocation = glGetProgramResourceIndex(modelLightningShader.GetHandlerID(), GL_SHADER_STORAGE_BLOCK, "u_LightsBuffer");
+    glShaderStorageBlockBinding(modelLightningShader.GetHandlerID(), modelSsbLocation, ssbBinding);
+    unsigned int modelLightsSSBO;
+    glGenBuffers(1, &modelLightsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelLightsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, modelLightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     //TODO: not sure about this shit lmao, surely there is a way to do it on the stack
@@ -240,7 +255,7 @@ int main(void)
 
             glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            
+
             doubleTextureShader.Bind();
             doubleTextureShader.SetUniform1f("u_Time", currentTime);
 
@@ -251,7 +266,7 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_Projection", projection);
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
-            square.Draw();
+            //square.Draw();
             doubleTextureShader.Unbind();
 
             basicLightningShader.Bind();
@@ -352,7 +367,6 @@ int main(void)
                 glBufferData(GL_SHADER_STORAGE_BUFFER, lightsData.size() * sizeof(LightStruct), &lightsData[0], GL_STREAM_DRAW);
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
             }
-            lightsData.clear();
 
             //basicLightningShader.SetUniform1i("u_GlobalLightCount", globalLightCount);
             //basicLightningShader.SetUniform1i("u_DirectionalLightCount", directionalLightCount);
@@ -369,9 +383,32 @@ int main(void)
                 MVP = projection * view * model;
                 basicLightningShader.SetUniformMat4f("u_Model", model);
                 basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-                cube->Draw();
+                //cube->Draw();
             }
             basicLightningShader.Unbind();
+
+            modelLightningShader.Bind();
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+            //model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
+            //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            MVP = projection * view * model;
+            modelLightningShader.SetUniformMat4f("u_View", view);
+            modelLightningShader.SetUniformMat4f("u_Projection", projection);
+            modelLightningShader.SetUniformMat4f("u_Model", model);
+            modelLightningShader.SetUniformMat4f("u_MVP", MVP);
+            modelLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
+            modelLightningShader.SetUniform1i("u_LightCount", lightsData.size());
+            if (lightsData.size() > 0)
+            {
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelLightsSSBO);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, lightsData.size() * sizeof(LightStruct), &lightsData[0], GL_STREAM_DRAW);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+            }
+            backpackModel.Draw(modelLightningShader);
+            modelLightningShader.Unbind();
+
+            lightsData.clear();
 
             lightSourceShader.Bind();
             //TODO: Okay i really hate this code but it's late so Ill clean it later rn i don't want to think about how to avoid 2 light for-loops but 1 = shader rebindings in loop to setUniform+draw

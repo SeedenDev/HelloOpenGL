@@ -1,14 +1,13 @@
 #include "VertexArray.h"
 
 #include <string>
-#include <iostream>
 
 VertexArray::VertexArray()
 {
 	unsigned int vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-		
+
 	m_HandlerID = vao;
 }
 

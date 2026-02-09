@@ -13,23 +13,23 @@
 #include <vector>
 
 #include "ApplicationWindow.h"
-#include "Shader.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "VertexArray.h"
-#include "Texture.h"
-#include "Camera.h"
-#include "Square.h"
-#include "Cube.h"
+#include "Rendering/Shader.h"
+#include "Rendering/VertexBuffer.h"
+#include "Rendering/IndexBuffer.h"
+#include "Rendering/VertexArray.h"
+#include "Rendering/Texture.h"
+#include "Scene/Camera.h"
+#include "Scene/Square.h"
+#include "Scene/Cube.h"
 #include "Input.h"
 #include "Lights/LightSource.h"
-#include "Material.h"
+#include "Rendering/Material.h"
 #include "Lights/DirectionalLight.h"
 #include "Lights/PointLight.h"
 #include "Lights/Spotlight.h"
 #include "Lights/Flashlight.h"
 #include "Lights/GlobalLight.h"
-#include "Model/ModelLoader.h"
+#include "Rendering/ModelLoader.h"
 
 int main(void)
 {
@@ -37,44 +37,47 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    //TODO: everything below in a Renderer class or stg like that
+    //TODO: everything below in a Renderer class or smth like that
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    Shader simpleColorShader("assets/shaders/basic.vert", "assets/shaders/simpleColor.frag");
-    // Double texture shade
-    Shader doubleTextureShader("assets/shaders/basic.vert", "assets/shaders/doubleTexture.frag");
-    doubleTextureShader.Bind();
-
+    Texture white("assets/textures/1x1_white.png");
     Texture texture0("assets/textures/test1.png");
     Texture texture1("assets/textures/test.png");
     Texture diffuseMapTexture("assets/textures/container_diffuse.png");
     Texture specularMapTexture("assets/textures/container_specular.png");
-    Texture emissionMapTexture("assets/textures/container_emission.png");
+    Texture emissiveMapTexture("assets/textures/container_emissive.png");
+    // Material => link Texture&Slot and just all the loaded textures in a list in the Renderer?
+    // Also, could be a sampler2D array, each vertex has a texIndex, and each frame glBindTextureUnit?
+    white.Bind(5);
+    texture0.Bind(0);
+    texture1.Bind(1);
     diffuseMapTexture.Bind(10);
     specularMapTexture.Bind(11);
-    emissionMapTexture.Bind(12);
-    // Material => link Texture&Slot and just all the loaded textures in a list in the Renderer?
-    // Also, could be a sampler2D array, each vertex has a texIndex, and each frame glBindTextureUnit
-    texture0.Bind(0);
-    doubleTextureShader.SetUniform1i("u_Texture0", 0);
-    texture1.Bind(1);
-    doubleTextureShader.SetUniform1i("u_Texture1", 1);
+    emissiveMapTexture.Bind(12);
 
+    Shader basicUnlitShader("assets/shaders/basicUnlit.vert", "assets/shaders/basicUnlit.frag");
+    basicUnlitShader.Bind();
+    basicUnlitShader.SetUniform1i("u_Texture", 5);
+    basicUnlitShader.Unbind();
+    Shader doubleTextureShader("assets/shaders/basicUnlit.vert", "assets/shaders/doubleTexture.frag");
+    doubleTextureShader.Bind();
+    doubleTextureShader.SetUniform1i("u_TextureLower", 0);
+    doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
     doubleTextureShader.Unbind();
 
     // Light part
-    Shader lightSourceShader("assets/shaders/lightSource.vert", "assets/shaders/simpleColor.frag");
     Shader basicLightningShader("assets/shaders/basicLightning.vert", "assets/shaders/basicLightning.frag");
-    /*basicLightningShader.Bind();
+    /*SPOTLIGHT TEST:
+    basicLightningShader.Bind();
     Texture spotlightTexture("assets/textures/test2.png");
     spotlightTexture.Bind(5);
     basicLightningShader.SetUniform1i("u_SpotlightTexture", 5);
     basicLightningShader.Unbind();*/
 
     // Model loading tests
-    Shader modelLightningShader("assets/shaders/modelLightning.vert", "assets/shaders/modelLightning.frag");
-    Model backpackModel("assets/models/columbina/columbina.obj", 0);
+    //Model customModel("assets/models/columbina/columbina.obj", 0);
+    Model customModel("assets/models/backpack/backpack.obj", 1);
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
@@ -99,11 +102,10 @@ int main(void)
 
     //TODO: add again the possibility of having 2D draw on screen like HUD
 
-    Square square(glm::vec3(0.0f), glm::vec3(0.3f, 0.0f, 0.8f));
+    Square square(glm::vec3(0.0f), glm::vec4(0.3f, 0.0f, 0.8f, 1.f));
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     square.SetScale(glm::vec3(0.5f));
 
-    Material mat1(glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(1.0f, 0.5f, 1.0f), glm::vec3(0.8f, 0.8f, 0.8f), 64);//TODO: mat for each cube (better: mat list and select one in cube data)
     std::vector<Cube*> cubes = {
         new Cube(glm::vec3(0.0f,  0.0f,  0.0f)),
         new Cube(glm::vec3(2.0f,  5.0f, -15.0f)),
@@ -157,16 +159,6 @@ int main(void)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, lightsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    // Dying for this duplicated code but i just want to test
-    GLuint modelSsbLocation = glGetProgramResourceIndex(modelLightningShader.GetHandlerID(), GL_SHADER_STORAGE_BLOCK, "u_LightsBuffer");
-    glShaderStorageBlockBinding(modelLightningShader.GetHandlerID(), modelSsbLocation, ssbBinding);
-    unsigned int modelLightsSSBO;
-    glGenBuffers(1, &modelLightsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelLightsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, modelLightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     //TODO: not sure about this shit lmao, surely there is a way to do it on the stack
@@ -237,9 +229,8 @@ int main(void)
             /* Update */
             if (Input::IsKeyPressed(GLFW_KEY_R))
             {
-                simpleColorShader.Reload();
+                basicUnlitShader.Reload();
                 doubleTextureShader.Reload();
-                lightSourceShader.Reload();
                 basicLightningShader.Reload();
             }
             appWindow.Update();
@@ -255,6 +246,7 @@ int main(void)
 
             glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //glDepthFunc(GL_LEQUAL);
 
             doubleTextureShader.Bind();
             doubleTextureShader.SetUniform1f("u_Time", currentTime);
@@ -266,8 +258,18 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_Projection", projection);
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
+            doubleTextureShader.SetUniformVec4f("u_DynamicColor", square.GetColor());
             //square.Draw();
             doubleTextureShader.Unbind();
+
+            basicUnlitShader.Bind();
+            //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
+            for (int i = 0; i < lightsStack.size(); i++)
+            {
+                LightSource* light = lightsStack[i];//lights[i];
+                if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
+            }
+            basicUnlitShader.Unbind();
 
             basicLightningShader.Bind();
             basicLightningShader.SetUniformMat4f("u_View", view);
@@ -275,12 +277,18 @@ int main(void)
             basicLightningShader.SetUniform1f("u_FogEnabled", enableFog);
             basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
             basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
-            basicLightningShader.SetUniform1f("u_Time", currentTime); // for emission texture cool animation
+            basicLightningShader.SetUniform1f("u_Time", currentTime); // for emissive texture cool animation
             basicLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
-            basicLightningShader.SetUniform1i("u_Material.diffuseMap", 10); // set value for now
-            basicLightningShader.SetUniform1i("u_Material.specularMap", 11); // set value for now
-            basicLightningShader.SetUniform1i("u_Material.emissionMap", 12); // set value for now
-            basicLightningShader.SetUniform1f("u_Material.shininess", mat1.GetSpecularShininess());
+            // everything set by hand because Material can't really retrieve a texture because for now the system
+            // is tied to the Model loader and not to an asset system
+            basicLightningShader.SetUniform1i("u_Material.hasDiffuse", 1);
+            basicLightningShader.SetUniform1i("u_Material.hasSpecular", 1);
+            basicLightningShader.SetUniform1i("u_Material.hasEmissive", 1);
+            basicLightningShader.SetUniform1i("u_Material.diffuseMap", 10);
+            basicLightningShader.SetUniform1i("u_Material.specularMap", 11);
+            basicLightningShader.SetUniform1i("u_Material.emissiveMap", 12);
+            basicLightningShader.SetUniform1f("u_Material.shininess", 64.f);
+            basicLightningShader.SetUniform1f("u_Material.specularStrength", 1.0f);
 
             lightsData.reserve(lightsStack.size());
             //TODO: the Common interfaces thing could be removed with proper implementations i think.. (btw I read CPP casts are now faster that C-style ones on modern compiler so..)
@@ -367,6 +375,7 @@ int main(void)
                 glBufferData(GL_SHADER_STORAGE_BUFFER, lightsData.size() * sizeof(LightStruct), &lightsData[0], GL_STREAM_DRAW);
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
             }
+            lightsData.clear();
 
             //basicLightningShader.SetUniform1i("u_GlobalLightCount", globalLightCount);
             //basicLightningShader.SetUniform1i("u_DirectionalLightCount", directionalLightCount);
@@ -383,43 +392,18 @@ int main(void)
                 MVP = projection * view * model;
                 basicLightningShader.SetUniformMat4f("u_Model", model);
                 basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-                //cube->Draw();
+                cube->Draw();
             }
-            basicLightningShader.Unbind();
 
-            modelLightningShader.Bind();
             model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-            //model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
-            //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            //model = glm::scale(model, glm::vec3(30.0f));
+            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             MVP = projection * view * model;
-            modelLightningShader.SetUniformMat4f("u_View", view);
-            modelLightningShader.SetUniformMat4f("u_Projection", projection);
-            modelLightningShader.SetUniformMat4f("u_Model", model);
-            modelLightningShader.SetUniformMat4f("u_MVP", MVP);
-            modelLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
-            modelLightningShader.SetUniform1i("u_LightCount", lightsData.size());
-            if (lightsData.size() > 0)
-            {
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelLightsSSBO);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, lightsData.size() * sizeof(LightStruct), &lightsData[0], GL_STREAM_DRAW);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-            }
-            backpackModel.Draw(modelLightningShader);
-            modelLightningShader.Unbind();
-
-            lightsData.clear();
-
-            lightSourceShader.Bind();
-            //TODO: Okay i really hate this code but it's late so Ill clean it later rn i don't want to think about how to avoid 2 light for-loops but 1 = shader rebindings in loop to setUniform+draw
-            // last second thought before pushing: maybe just combine the two shaders and a param "IsLightSource" to skip everything in the fragment shader
-            //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for(int i = 0; i < lightsStack.size(); i++)
-            {
-                LightSource* light = lightsStack[i];//lights[i];
-                if(light->IsToggled()) light->DrawDebugCube(lightSourceShader, view, projection);
-            }
-            lightSourceShader.Unbind();
+            basicLightningShader.SetUniformMat4f("u_Model", model);
+            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
+            customModel.Draw(basicLightningShader);
+            basicLightningShader.Unbind();
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -490,7 +474,7 @@ int main(void)
                             if (ImGui::SliderFloat3("Position", &cubePos[0], -150.0f, 150.0f)) cube->SetPosition(cubePos);
                             if (ImGui::SliderFloat3("Rotation", &cubeRot[0], -360.0f, 360.0f)) cube->SetEulerRotation(cubeRot);
                             if (ImGui::SliderFloat3("Scale", &cubeScale[0], 0.5f, 10000.0f)) cube->SetScale(cubeScale);
-                            ImGui::SliderFloat("SpecShininess", &mat1.GetSpecularShininess(), 0.0f, 512.0f);
+                            //ImGui::SliderFloat("SpecShininess", &mat1.GetSpecularShininess(), 0.0f, 512.0f);
                         }
                     }
                     ImGui::EndTabItem();

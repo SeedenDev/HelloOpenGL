@@ -8,8 +8,8 @@
 #include "IndexBuffer.h"
 
 /* Mesh class */
-Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, std::vector<MeshTexture>& textures)
-	: m_Vertices(std::move(vertices)), m_Indices(std::move(indices)), m_Textures(std::move(textures))
+Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material)
+	: m_Vertices(std::move(vertices)), m_Indices(std::move(indices)), m_Material(std::move(material))
 {
 	SetupGLData();
 }
@@ -26,7 +26,7 @@ Mesh::Mesh(const Mesh& other)
 {
 	m_Vertices = std::move(other.m_Vertices);
 	m_Indices = std::move(other.m_Indices);
-	m_Textures = std::move(other.m_Textures);
+	m_Material = std::move(other.m_Material);
 	m_Vao = other.m_Vao;
 	m_Vbo = other.m_Vbo;
 	m_Ibo = other.m_Ibo;
@@ -37,7 +37,7 @@ Mesh::Mesh(Mesh&& other) noexcept
 {
 	m_Vertices = std::move(other.m_Vertices);
 	m_Indices = std::move(other.m_Indices);
-	m_Textures = std::move(other.m_Textures);
+	m_Material = std::move(other.m_Material);
 	m_Vao = other.m_Vao;
 	m_Vbo = other.m_Vbo;
 	m_Ibo = other.m_Ibo;
@@ -49,23 +49,7 @@ Mesh::Mesh(Mesh&& other) noexcept
 
 void Mesh::Draw(Shader& shader)
 {
-	//TODO: proper textures loading (if there are several ones for one mesh) meaning sampler2D[] buffer and idk how I should handle it in the shader but well
-	bool diffuseSet = 0, specularSet = 0;
-	for (int i = 0; i < m_Textures.size(); i++)
-	{
-		MeshTexture& texture = m_Textures[i]; //maybe using ref will destruct the mesh when leaving the for scope
-		if (texture.type == DIFFUSE)
-		{
-			if (!diffuseSet)
-			{
-				shader.SetUniform1i("u_Material.diffuseMap", texture.texIndex);
-				diffuseSet = 1;
-			}
-			else std::cout << "Diffuse already set" << std::endl;
-		}
-		if (texture.type == SPECULAR) shader.SetUniform1i("u_Material.specularMap", texture.texIndex);
-	}
-	shader.SetUniform1f("u_Material.shininess", 0.5f); //with shininess map
+	m_Material.BindTo(shader);
 	glBindVertexArray(m_Vao);
 	glDrawElements(GL_TRIANGLES, m_Indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
@@ -114,9 +98,29 @@ Model::~Model()
 
 void Model::Draw(Shader& shader)
 {
-	for (int i = 0; i < m_Textures.size(); i++) m_Textures[i].Bind(i);
-	for (int i = 0; i < m_Meshes.size(); i++) m_Meshes[i].Draw(shader);
-	for (int i = 0; i < m_Textures.size(); i++) m_Textures[i].Unbind();
+	for (int i = 0; i < m_Meshes.size(); i++)
+	{
+		Mesh& mesh = m_Meshes[i];
+		const Material& mat = mesh.GetMaterial();
+		// Binding textures here to avoid to pass Model object into the Mesh object (waiting for asset system perhaps in a real engine)
+		if (mat.HasDiffuseTexture())
+		{
+			m_Textures[mat.GetDiffuseTexture()].Bind(20);
+			shader.SetUniform1i("u_Material.diffuseMap", 20);
+			shader.SetUniform1i("u_Material.specularMap", 20); //NOTE: just to test the specular lightning
+		}
+		if (mat.HasSpecularTexture())
+		{
+			m_Textures[mat.GetSpecularTexture()].Bind(21);
+			shader.SetUniform1i("u_Material.specularMap", 21);
+		}
+		if (mat.HasEmissiveTexture())
+		{
+			m_Textures[mat.GetEmissiveTexture()].Bind(22);
+			shader.SetUniform1i("u_Material.emissiveMap", 22);
+		}
+		mesh.Draw(shader);
+	}
 }
 
 //private
@@ -137,38 +141,44 @@ void Model::Load()
 	m_Textures.reserve(scene->mNumMaterials * 2); // *2 because currently asking for both DIFFUSE & SPECULAR textures (considering only 1 texture per texture type per mesh)
 	m_CachedTextures.reserve(scene->mNumMaterials * 2);
 	if(scene->mNumTextures>0) LoadEmbeddedTextures(scene);
-	ProcessNode(scene->mRootNode, scene);
+	ProcessNode(scene->mRootNode, scene, glm::mat4(1));
 	m_CachedTextures.clear();
 }
 
-void Model::ProcessNode(aiNode* node, const aiScene* scene)
+void Model::ProcessNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform)
 {
+	aiMatrix4x4 mat = node->mTransformation;
+	const glm::mat4 nodeTransform = glm::mat4(
+		mat.a1, mat.a2, mat.a3, mat.a4,
+		mat.b1, mat.b2, mat.b3, mat.b4,
+		mat.c1, mat.c2, mat.c3, mat.c4,
+		mat.d1, mat.d2, mat.d3, mat.d4
+	) * parentTransform;
+
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(mesh, scene, m_Meshes);
+		ProcessMesh(mesh, scene, nodeTransform, m_Meshes);
 	}
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		ProcessNode(node->mChildren[i], scene);
+		ProcessNode(node->mChildren[i], scene, nodeTransform);
 	}
 }
 
-void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<Mesh>& outMeshes)
+void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes)
 {
 	std::vector<MeshVertex> vertices;
 	std::vector<unsigned int> indices;
-	std::vector<MeshTexture> textures;
+	Material material;
 	vertices.reserve(mesh->mNumVertices);
 	indices.reserve(mesh->mNumFaces);
-	textures.reserve(scene->mNumMaterials * 2);
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
 		MeshVertex vertex;
-		//TODO: PARENTNODETRANSFORMWITHMAT4
-		vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-		if (mesh->HasNormals()) vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f) * nodeTransform;
+		if (mesh->HasNormals()) vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) * glm::mat3(nodeTransform);
 		//NOTE: what are the other texture coords (layer 1/2/3) for?
 		if (mesh->mTextureCoords[0]) vertex.textureUV = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
 		else vertex.textureUV = { 0.0f, 0.0f };
@@ -182,16 +192,19 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<Mesh>& o
 	if (mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-		LoadMaterialTextures(mat, aiTextureType_DIFFUSE, DIFFUSE, textures);
-		LoadMaterialTextures(mat, aiTextureType_SPECULAR, SPECULAR, textures);
+		//TODO: smth to cache materials and so in Mesh no material stored, only reference to an existing one (avoid duplicated item+batch rendering of every mesh using the same mat in the future)
+		// => well, jus the matIndex lmao
+		material.SetDiffuseTexture(GetMaterialTextureIndex(mat, aiTextureType_DIFFUSE));
+		material.SetSpecularTexture(GetMaterialTextureIndex(mat, aiTextureType_SPECULAR));
+		material.SetEmissiveTexture(GetMaterialTextureIndex(mat, aiTextureType_EMISSIVE));
+		LoadMaterialProperties(mat, material);
 	}
-	if (textures.size() == 0) 
-		std::cout << "uh" << std::endl;
-	outMeshes.emplace_back(vertices, indices, textures);
+	outMeshes.emplace_back(vertices, indices, material);
 }
 
-void Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, TextureType textureType, std::vector<MeshTexture>& outTextures)
+int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
 {
+	std::cout << "Loading texture type " << std::to_string(type) << ": found " << std::to_string(mat->GetTextureCount(type)) << std::endl;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 	{
 		aiString texturePath;
@@ -199,14 +212,38 @@ void Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, TextureTyp
 		std::string textureAssetPath = m_AssetPath + "/" + texturePath.C_Str();
 		if (auto x = m_CachedTextures.find(textureAssetPath); x != m_CachedTextures.end())
 		{
-			outTextures.emplace_back(x->second, textureType);
-			continue;
+			return x->second;
 		}
 		m_Textures.emplace_back(textureAssetPath);
-		m_CachedTextures.emplace(textureAssetPath, m_Textures.size() - 1); // in multithreaded content should have an atomic integer GetNextIndex() or stg like that ig
-		outTextures.emplace_back(m_Textures.size() - 1, textureType);
+		m_CachedTextures.emplace(textureAssetPath, m_Textures.size() - 1); // in multithreaded content should have an atomic integer GetNextIndex() or smth like that ig
 		std::cout << "External texture loaded: " << textureAssetPath << std::endl;
+		return m_Textures.size() - 1;
 	}
+	return -1;
+}
+
+void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
+{
+	aiColor3D color(0.f, 0.f, 0.f);
+	float shininess;
+
+	mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
+	outMaterial.SetAmbientColor(glm::vec3(color.r, color.b, color.g));
+
+	mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+	outMaterial.SetDiffuseColor(glm::vec3(color.r, color.b, color.g));
+
+	mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
+	outMaterial.SetSpecularColor(glm::vec3(color.r, color.b, color.g));
+
+	mat->Get(AI_MATKEY_COLOR_EMISSIVE, color);
+	outMaterial.SetEmissiveColor(glm::vec3(color.r, color.b, color.g));
+
+	mat->Get(AI_MATKEY_SHININESS, shininess);
+	outMaterial.SetSpecularShininess(shininess);
+
+	mat->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
+	outMaterial.SetSpecularStrength(shininess);
 }
 
 void Model::LoadEmbeddedTextures(const aiScene* scene)

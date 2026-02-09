@@ -6,10 +6,18 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "GlobalUtil.h"
-#include "VertexArray.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "VertexLayout.h"
+#include "Rendering/VertexArray.h"
+#include "Rendering/VertexBuffer.h"
+#include "Rendering/IndexBuffer.h"
+#include "Rendering/VertexLayout.h"
+
+const float g_SquareVertices[] = {
+    // pos      // color          // texture
+    -0.5, -0.5, 1.0f, 1.0f, 1.0f, 0.0, 0.0, // 0 (bottom-left)
+     0.5, -0.5, 1.0f, 1.0f, 1.0f, 1.0, 0.0, // 1 (bottom-right)
+     0.5,  0.5, 1.0f, 1.0f, 1.0f, 1.0, 1.0, // 2 (top-right)
+    -0.5,  0.5, 1.0f, 1.0f, 1.0f, 0.0, 1.0  // 3 (top-left)
+};
 
 const unsigned int g_SquareIndices[] = {
     0, 1, 2,
@@ -19,19 +27,22 @@ const unsigned int g_SquareIndices[] = {
 class Square
 {
 private:
-
     VertexArray m_Vao;
+    VertexBuffer m_Vbo = VertexBuffer(g_SquareVertices, sizeof(g_SquareVertices));
+    IndexBuffer m_Ibo = IndexBuffer(g_SquareIndices, sizeof(g_SquareIndices));
     Geometry::Transform3D m_Transform;
+    glm::vec4 m_Color;
 
     glm::mat4 m_ModelMatrix;
 
 public:
-    Square(glm::vec3 position, glm::vec3 color = glm::vec3(1.0f));
+    Square(glm::vec3 position, glm::vec4 color = glm::vec4(1.0f));
     ~Square();
 
-    const glm::vec3& GetPosition() const { return m_Transform.position; }
-    const glm::vec3& GetEulerRotation() const { return m_Transform.rotation; }
-    const glm::vec3& GetScale() const { return m_Transform.scale; }
+    inline const glm::vec3& GetPosition() const { return m_Transform.position; }
+    inline const glm::vec3& GetEulerRotation() const { return m_Transform.rotation; }
+    inline const glm::vec3& GetScale() const { return m_Transform.scale; }
+    inline const glm::vec4& GetColor() const { return m_Color; }
 
     void SetPosition(glm::vec3 newPos)
     {

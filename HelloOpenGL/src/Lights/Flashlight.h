@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Spotlight.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 
 class Flashlight : public Spotlight
 {

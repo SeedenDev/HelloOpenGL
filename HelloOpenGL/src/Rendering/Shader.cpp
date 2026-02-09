@@ -65,6 +65,11 @@ void Shader::SetUniform1ui(const std::string& name, unsigned int v0)
     glUniform1ui(GetUniformLocation(name), v0);
 }
 
+void Shader::SetUniformVec4f(const std::string& name, const glm::vec4& vec4)
+{
+    SetUniform4f(name, vec4.x, vec4.y, vec4.z, vec4.w);
+}
+
 void Shader::Bind() const
 {
     glUseProgram(m_HandlerID);

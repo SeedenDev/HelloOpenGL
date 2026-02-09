@@ -4,8 +4,8 @@
 #include <string>
 
 #include "ImGuiDebugInterface.h"
-#include "Cube.h"
-#include "Shader.h"
+#include "Scene/Cube.h"
+#include "Rendering/Shader.h"
 
 namespace LightType
 {

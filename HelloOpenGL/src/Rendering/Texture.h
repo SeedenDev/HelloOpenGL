@@ -19,7 +19,7 @@ public:
 	Texture(Texture&& other) noexcept;
 	Texture& operator=(Texture&& other) noexcept;
 
-	void Bind(unsigned int slot = 0);
+	void Bind(unsigned int slot);
 	void Unbind() const;
 
 	inline int GetWidth() const { return m_Width; }

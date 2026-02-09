@@ -8,10 +8,20 @@ in vec3 vertexComputedNormal;
 
 struct Material 
 {
+    bool hasDiffuse;
+    bool hasSpecular;
+    bool hasEmissive;
+    // Material properties
+    vec3 ambientColor;
+    vec3 diffuseColor;
+    vec3 specularColor;
+    vec3 emissiveColor;
+    float shininess; // scattering
+    float specularStrength; // scales the specularColor
+    // Eventual textures
     sampler2D diffuseMap; // stores both ambient&diffuse color as the object texture
     sampler2D specularMap; // used for specular sampling
-    sampler2D emissionMap; // emission = glowing even if not lit
-    float shininess; // scattering
+    sampler2D emissiveMap; // emissive = glowing even if not lit
 };
 uniform Material u_Material;
 
@@ -30,7 +40,7 @@ struct Light
     float innerCutOff;
     float outerCutOff;
     float type; // 0=global ; 1=dir ; 2=point ; 3=spot ; 4=flash
-    float a;
+    float a; //TODO: remove this bruh.. but it's for the data layout alignment.... have to find a better fix
     float b;
 };
 
@@ -71,12 +81,14 @@ vec3 CalcAttenuationSpotlight(Light light, vec3 materialAmbient, vec3 materialDi
 
 void main()
 {
-    vec3 materialBaseColor = texture(u_Material.diffuseMap, vertexTex).rgb;
-    vec3 materialSpecularIntensity = texture(u_Material.specularMap, vertexTex).rgb;
+    vec3 materialDiffuseColor = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgb : u_Material.diffuseColor;
+    vec3 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : u_Material.ambientColor;
+    vec3 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex).rgb : u_Material.specularColor; 
+    materialSpecularColor *= u_Material.specularStrength;
+    vec3 materialEmissiveColor = u_Material.hasEmissive ? texture(u_Material.emissiveMap, vertexTex/*+vec2(0, u_Time)*/).rgb : u_Material.emissiveColor;
     //TODO: see if emission should really have a mask depending on the specular in any situation or if it just here (thinking about animated textures, seems a great challenge with emission)
-    /*vec3 materialEmissionColor = texture(u_Material.emissionMap, vertexTex+vec2(0, u_Time)).rgb;
-    vec3 emissionMask = step(vec3(1), vec3(1)-materialSpecularIntensity);
-    materialEmissionColor *= emissionMask;*/
+    vec3 emissiveMask = step(vec3(1), vec3(1)-materialSpecularColor);
+    materialEmissiveColor *= emissiveMask;
 
     vec3 normal = normalize(vertexComputedNormal);
     vec3 viewDir = vertexWorldPos - u_CameraPos;
@@ -88,10 +100,10 @@ void main()
     for(int i = 0; i < u_LightCount; i++)
     {
         Light light = u_Lights[i];
-        if(light.type==0) resultColor += CalcGlobalLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
-        else if(light.type==1) resultColor += CalcDirLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
-        else if(light.type==2) resultColor += CalcPointLight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
-        else if(light.type==3 || light.type==4) resultColor += CalcSpotlight(light, materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
+        if(light.type==0) resultColor += CalcGlobalLight(light, materialAmbientColor, materialDiffuseColor, materialSpecularColor, normal, viewDir);
+        else if(light.type==1) resultColor += CalcDirLight(light, materialAmbientColor, materialDiffuseColor, materialSpecularColor, normal, viewDir);
+        else if(light.type==2) resultColor += CalcPointLight(light, materialAmbientColor, materialDiffuseColor, materialSpecularColor, normal, viewDir);
+        else if(light.type==3 || light.type==4) resultColor += CalcSpotlight(light, materialAmbientColor, materialDiffuseColor, materialSpecularColor, normal, viewDir);
     }
     /*
     for(int i = 0; i < u_GlobalLightCount; i++) resultColor += CalcGlobalLight(u_GlobalLights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
@@ -100,7 +112,7 @@ void main()
     for(int i = 0; i < u_SpotlightCount; i++) resultColor += CalcSpotlight(u_Spotlights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     */
 
-    vec4 finalColor = vec4(resultColor, 1.0);
+    vec4 finalColor = vec4(resultColor + materialEmissiveColor, 1.0);
 
     // Fog test (to move to a special shader when I know how to combine shaders without having to do 2 draw calls)
     if(u_FogEnabled)

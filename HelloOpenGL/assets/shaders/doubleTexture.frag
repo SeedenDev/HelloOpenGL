@@ -1,21 +1,18 @@
 #version 330 core
-   
+//TODO: remove when there'll be infinite texture layers support (maybe not infinite but like an array of 10 samplers?)
 out vec4 outColor;
 
-in vec4 vertexBasePos;
-in vec4 vertexScreenPos;
-in vec3 vertexColor;
+in vec4 vertexColor;
 in vec2 vertexTex;
 
-uniform float u_Time;
-uniform sampler2D u_Texture0;
-uniform sampler2D u_Texture1;
+uniform sampler2D u_TextureLower;
+uniform sampler2D u_TextureUpper;
 
 void main()
 {
-    vec4 lowerTex = texture(u_Texture0, vertexTex);
-    vec4 upperTex = texture(u_Texture1, vertexTex);
-    vec4 texColor = mix(lowerTex, upperTex, upperTex.a*0.5);
-    vec4 color = texColor.rgba * vec4(vertexColor, 1.0);
+    vec4 lowerTex = texture(u_TextureLower, vertexTex);
+    vec4 upperTex = texture(u_TextureUpper, vertexTex);
+    vec4 texColor = mix(lowerTex, upperTex, 0.5);
+    vec4 color = texColor * vertexColor;
     outColor = color;
 }

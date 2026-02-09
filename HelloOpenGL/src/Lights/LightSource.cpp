@@ -14,7 +14,7 @@ void LightSource::DrawDebugCube(Shader& shader, const glm::mat4& view, const glm
 	shader.SetUniformMat4f("u_Projection", projection);
 	shader.SetUniformMat4f("u_Model", model);
 	shader.SetUniformMat4f("u_MVP", MVP);
-	shader.SetUniformVec3f("u_LightColor", m_DiffuseColor);
+	shader.SetUniformVec4f("u_DynamicColor", glm::vec4(m_DiffuseColor, 1.f));
 	m_DebugCube.Draw();
 }
 

@@ -93,6 +93,8 @@ void Texture::SetupGLData()
 {
 	glGenTextures(1, &m_HandlerID);
 	glActiveTexture(GL_TEXTURE0);
+	GLint lastHandle;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastHandle);
 	glBindTexture(GL_TEXTURE_2D, m_HandlerID);
 
 	//TODO: a way to choose it for every texture
@@ -104,7 +106,7 @@ void Texture::SetupGLData()
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_DataBuffer);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, lastHandle);
 
 	if (m_DataBuffer)
 		stbi_image_free(m_DataBuffer);

@@ -27,8 +27,6 @@ private:
 public:
 	Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material);
 	~Mesh();
-	Mesh(const Mesh& other);
-	Mesh(Mesh&& other) noexcept;
 
 	inline const Material& GetMaterial() const { return m_Material; }
 

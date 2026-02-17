@@ -9,7 +9,7 @@
 
 /* Mesh class */
 Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material)
-	: m_Vertices(std::move(vertices)), m_Indices(std::move(indices)), m_Material(std::move(material))
+	: m_Vertices(std::move(vertices)), m_Indices(std::move(indices)), m_Material(material)
 {
 	SetupGLData();
 }
@@ -20,31 +20,6 @@ Mesh::~Mesh()
 	glDeleteBuffers(1, &m_Vbo);
 	glDeleteBuffers(1, &m_Ibo);
 	std::cout << "mesh destructor" << std::to_string(m_Vao) << "/" << std::to_string(m_Vbo) << "/" << std::to_string(m_Ibo) << "/" << std::endl;
-}
-
-Mesh::Mesh(const Mesh& other)
-{
-	m_Vertices = std::move(other.m_Vertices);
-	m_Indices = std::move(other.m_Indices);
-	m_Material = std::move(other.m_Material);
-	m_Vao = other.m_Vao;
-	m_Vbo = other.m_Vbo;
-	m_Ibo = other.m_Ibo;
-	std::cout << "mesh copied" << std::endl;
-}
-
-Mesh::Mesh(Mesh&& other) noexcept
-{
-	m_Vertices = std::move(other.m_Vertices);
-	m_Indices = std::move(other.m_Indices);
-	m_Material = std::move(other.m_Material);
-	m_Vao = other.m_Vao;
-	m_Vbo = other.m_Vbo;
-	m_Ibo = other.m_Ibo;
-	other.m_Vao = 0;
-	other.m_Vbo = 0;
-	other.m_Ibo = 0;
-	std::cout << "mesh moved" << std::endl;
 }
 
 void Mesh::Draw(Shader& shader)
@@ -72,11 +47,11 @@ void Mesh::SetupGLData()
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*) offsetof(MeshVertex, normal)); // 3*sizeof(float)
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*) offsetof(MeshVertex, textureUV)); // 3*sizeof(float)+3*sizeof(float)=6*sizeof(float)
-
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)offsetof(MeshVertex, textureUV)); // 3*sizeof(float)+3*sizeof(float)=6*sizeof(float)
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*) offsetof(MeshVertex, normal)); // 3*sizeof(float)
+	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

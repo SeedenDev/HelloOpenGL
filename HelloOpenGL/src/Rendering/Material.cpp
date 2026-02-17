@@ -9,36 +9,6 @@ Material::Material()
 
 Material::~Material()
 {
-    std::cout << "material destructor" << std::endl;
-}
-
-Material::Material(const Material& other)
-{
-	std::cout << "material copied" << std::endl;
-}
-
-Material::Material(Material&& other) noexcept
-{
-    m_AmbientColor = other.m_AmbientColor;
-    m_DiffuseColor = other.m_DiffuseColor;
-    m_SpecularColor = other.m_SpecularColor;
-    m_EmissiveColor = other.m_EmissiveColor;
-    m_SpecularShininess = other.m_SpecularShininess;
-    m_SpecularStrength = other.m_SpecularStrength;
-    m_DiffuseTexture = other.m_DiffuseTexture;
-    m_SpecularTexture = other.m_SpecularTexture;
-    m_EmissiveTexture = other.m_EmissiveTexture;
-	std::cout << "material moved" << std::endl;
-}
-
-Material& Material::operator=(const Material& other) noexcept
-{
-	std::cout << "material moved with op=" << std::endl;
-	if (this != &other)
-	{
-		std::cout << "effectively moved" << std::endl;
-	}
-	return *this;
 }
 
 void Material::BindTo(Shader& shader) const

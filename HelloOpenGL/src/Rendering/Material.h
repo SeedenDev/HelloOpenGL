@@ -22,9 +22,6 @@ private:
 public:
 	Material();
 	~Material();
-	Material(const Material& other);
-	Material(Material&& other) noexcept;
-	Material& operator=(const Material& other) noexcept;
 
 	void SetAmbientColor(glm::vec3 ambientColor) { m_AmbientColor = ambientColor; }
 	void SetDiffuseColor(glm::vec3 diffuseColor) { m_DiffuseColor = diffuseColor; }

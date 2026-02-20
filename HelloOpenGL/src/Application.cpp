@@ -31,6 +31,8 @@
 #include "Lights/GlobalLight.h"
 #include "Rendering/ModelLoader.h"
 
+
+
 int main(void)
 {
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
@@ -41,8 +43,10 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    //std::string imgData = Curl::GetRemoteImage("https://media.tenor.com/H-5K98Y4FhQAAAAM/cat-buh.gif");
+
     Texture white("assets/textures/1x1_white.png");
-    Texture texture0("assets/textures/test1.png");
+    Texture texture0(/*(unsigned char*)imgData.c_str(), imgData.size()*/"assets/textures/test1.png");
     Texture texture1("assets/textures/test.png");
     Texture diffuseMapTexture("assets/textures/container_diffuse.png");
     Texture specularMapTexture("assets/textures/container_specular.png");
@@ -259,7 +263,7 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", square.GetColor());
-            //square.Draw();
+            square.Draw();
             doubleTextureShader.Unbind();
 
             basicUnlitShader.Bind();
@@ -402,7 +406,7 @@ int main(void)
             MVP = projection * view * model;
             basicLightningShader.SetUniformMat4f("u_Model", model);
             basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-            customModel.Draw(basicLightningShader);
+            //customModel.Draw(basicLightningShader);
             basicLightningShader.Unbind();
 
             ImGui_ImplOpenGL3_NewFrame();

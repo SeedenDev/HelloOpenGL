@@ -31,7 +31,7 @@
 #include "Lights/GlobalLight.h"
 #include "Rendering/ModelLoader.h"
 
-
+//TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
 int main(void)
 {
@@ -43,11 +43,12 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //std::string imgData = Curl::GetRemoteImage("https://media.tenor.com/H-5K98Y4FhQAAAAM/cat-buh.gif");
+    std::string imgData = Curl::GetRemoteImage("https://media.tenor.com/H-5K98Y4FhQAAAAM/cat-buh.gif");
+    std::string imgData2 = Curl::GetRemoteImage("https://pbs.twimg.com/media/HBkHsm6bUAAAkXO?format=jpg&name=4096x4096");
 
     Texture white("assets/textures/1x1_white.png");
-    Texture texture0(/*(unsigned char*)imgData.c_str(), imgData.size()*/"assets/textures/test1.png");
-    Texture texture1("assets/textures/test.png");
+    Texture texture0((unsigned char*)imgData.c_str(), imgData.size());
+    Texture texture1((unsigned char*)imgData2.c_str(), imgData2.size());
     Texture diffuseMapTexture("assets/textures/container_diffuse.png");
     Texture specularMapTexture("assets/textures/container_specular.png");
     Texture emissiveMapTexture("assets/textures/container_emissive.png");
@@ -81,8 +82,8 @@ int main(void)
 
     // Model loading tests
     //Model customModel("assets/models/columbina/columbina.obj", 0);
-    Model customModel("assets/models/backpack/backpack.obj", 1);
-
+    //Model customModel("assets/models/backpack/backpack.obj", 1);
+    Model customModel("assets/models/sponza-glTF/Sponza.gltf", 1);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
 
@@ -106,7 +107,7 @@ int main(void)
 
     //TODO: add again the possibility of having 2D draw on screen like HUD
 
-    Square square(glm::vec3(0.0f), glm::vec4(0.3f, 0.0f, 0.8f, 1.f));
+    Square square(glm::vec3(0.0f)/*, glm::vec4(0.3f, 0.0f, 0.8f, 1.f)*/);
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     square.SetScale(glm::vec3(0.5f));
 
@@ -234,7 +235,13 @@ int main(void)
             if (Input::IsKeyPressed(GLFW_KEY_R))
             {
                 basicUnlitShader.Reload();
+                basicUnlitShader.Bind();
+                basicUnlitShader.SetUniform1i("u_Texture", 5);
                 doubleTextureShader.Reload();
+                doubleTextureShader.Bind();
+                doubleTextureShader.SetUniform1i("u_TextureLower", 0);
+                doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
+                doubleTextureShader.Unbind(); // not really necessary because next call is the same bind
                 basicLightningShader.Reload();
             }
             appWindow.Update();
@@ -396,17 +403,17 @@ int main(void)
                 MVP = projection * view * model;
                 basicLightningShader.SetUniformMat4f("u_Model", model);
                 basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-                cube->Draw();
+                //cube->Draw();
             }
 
             model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
             //model = glm::scale(model, glm::vec3(30.0f));
             model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             MVP = projection * view * model;
             basicLightningShader.SetUniformMat4f("u_Model", model);
             basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-            //customModel.Draw(basicLightningShader);
+            customModel.Draw(basicLightningShader);
             basicLightningShader.Unbind();
 
             ImGui_ImplOpenGL3_NewFrame();

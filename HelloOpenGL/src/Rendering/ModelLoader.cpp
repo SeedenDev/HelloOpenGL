@@ -82,7 +82,6 @@ void Model::Draw(Shader& shader)
 		{
 			m_Textures[mat.GetDiffuseTexture()].Bind(20);
 			shader.SetUniform1i("u_Material.diffuseMap", 20);
-			shader.SetUniform1i("u_Material.specularMap", 20); //NOTE: just to test the specular lightning
 		}
 		if (mat.HasSpecularTexture())
 		{
@@ -169,6 +168,7 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 		aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
 		//TODO: smth to cache materials and so in Mesh no material stored, only reference to an existing one (avoid duplicated item+batch rendering of every mesh using the same mat in the future)
 		// => well, jus the matIndex lmao
+		GetMaterialTextureIndex(mat, aiTextureType_AMBIENT);
 		material.SetDiffuseTexture(GetMaterialTextureIndex(mat, aiTextureType_DIFFUSE));
 		material.SetSpecularTexture(GetMaterialTextureIndex(mat, aiTextureType_SPECULAR));
 		material.SetEmissiveTexture(GetMaterialTextureIndex(mat, aiTextureType_EMISSIVE));

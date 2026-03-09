@@ -15,9 +15,6 @@ public:
 	Texture(const std::string& texturePath);
 	Texture(const unsigned char* data, int length);
 	~Texture();
-	Texture(const Texture& other);
-	Texture(Texture&& other) noexcept;
-	Texture& operator=(Texture&& other) noexcept;
 
 	void Bind(unsigned int slot);
 	void Unbind() const;

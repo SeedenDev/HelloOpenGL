@@ -99,7 +99,7 @@
     <Link>
       <!-- <SubSystem>Console</SubSystem> -->
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libbrotlicommon.a;libbrotlidec.a;libcrypto.a;libcurl.a;libcurl.dll.a;libnghttp2.a;libnghttp3.a;libngtcp2.a;libngtcp2_crypto_libressl.a;libpsl.a;libssh2.a;libssl.a;libz.a;libzstd.a;opengl32.lib;glfw3.lib;glew32s.lib;$(CoreLibraryDependencies);assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -117,7 +117,7 @@
     <Link>
       <!-- <SubSystem>Console</SubSystem> -->
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libbrotlicommon.a;libbrotlidec.a;libcrypto.a;libcurl.a;libcurl.dll.a;libnghttp2.a;libnghttp3.a;libngtcp2.a;libngtcp2_crypto_libressl.a;libpsl.a;libssh2.a;libssl.a;libz.a;libzstd.a;opengl32.lib;glfw3.lib;glew32s.lib;$(CoreLibraryDependencies);assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +133,7 @@
     <Link>
       <!-- <SubSystem>Console</SubSystem> -->
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libbrotlicommon.a;libbrotlidec.a;libcrypto.a;libcurl.a;libcurl.dll.a;libnghttp2.a;libnghttp3.a;libngtcp2.a;libngtcp2_crypto_libressl.a;libpsl.a;libssh2.a;libssl.a;libz.a;libzstd.a;opengl32.lib;glfw3.lib;glew32s.lib;$(CoreLibraryDependencies);assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -151,7 +151,7 @@
     <Link>
       <!-- <SubSystem>Console</SubSystem> -->
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\$(Platform)\GLEW\lib;$(SolutionDir)Dependencies\$(Platform)\GLFW\lib-vc2022;$(SolutionDir)Dependencies\$(Platform)\Assimp\lib;$(SolutionDir)Dependencies\$(Platform)\libcurl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libbrotlicommon.a;libbrotlidec.a;libcrypto.a;libcurl.a;libcurl.dll.a;libnghttp2.a;libnghttp3.a;libngtcp2.a;libngtcp2_crypto_libressl.a;libpsl.a;libssh2.a;libssl.a;libz.a;libzstd.a;libcurl.a;opengl32.lib;glfw3.lib;glew32s.lib;$(CoreLibraryDependencies);assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

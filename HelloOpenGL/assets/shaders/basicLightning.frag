@@ -81,7 +81,10 @@ vec3 CalcAttenuationSpotlight(Light light, vec3 materialAmbient, vec3 materialDi
 
 void main()
 {
-    vec3 materialDiffuseColor = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgb : u_Material.diffuseColor;
+    //TODO: use alpha for light calculation???
+    vec4 materialDiffuseColorAlpha = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgba : vec4(u_Material.diffuseColor, 1);
+    if(materialDiffuseColorAlpha.a<0.5) discard; // for sponza scene bruh
+    vec3 materialDiffuseColor = materialDiffuseColorAlpha.rgb;
     vec3 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : u_Material.ambientColor;
     vec3 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex).rgb : u_Material.specularColor; 
     materialSpecularColor *= u_Material.specularStrength;
@@ -178,7 +181,7 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
     vec3 diffuse = lightIntensity * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
     vec3 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
 
-    // Texture projection
+    // Texture projection (for future impl: https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Cookies)
     /*vec4 textureProjection = (u_Projection * u_View * light.position) * vec4(vertexWorldPos, 1.0);
     textureProjection /= textureProjection.w; // rasterize the projection space
     textureProjection = textureProjection * 0.5 + 0.5; // clip it [0;1] range

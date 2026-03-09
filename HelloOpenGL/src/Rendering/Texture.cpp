@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <iostream>
 
-static int i = 0;
+static int i = 0; //TODO: remove or index/identifier in the asset storage (for debug)
 
 Texture::Texture(const std::string& texturePath)
 	: m_HandlerID(0), m_TexturePath(texturePath), m_DataBuffer(nullptr), m_Width(0), m_Height(0), m_bytesPerChannel(0)
@@ -32,48 +32,6 @@ Texture::~Texture()
 {
 	glDeleteTextures(1, &m_HandlerID);
 	std::cout << "texture destructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
-}
-
-Texture::Texture(const Texture& other)
-{
-	m_HandlerID = other.m_HandlerID;
-	m_TexturePath = other.m_TexturePath;
-	m_Width = other.m_Width;
-	m_Height = other.m_Height;
-	m_bytesPerChannel = other.m_bytesPerChannel;
-	m_LastSlot = other.m_LastSlot;
-	index = i++;
-	std::cout << "texture copied" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << "//" << std::to_string(other.index) << "|" << std::to_string(other.m_HandlerID) << std::endl;
-}
-Texture::Texture(Texture&& other) noexcept
-{
-	m_HandlerID = other.m_HandlerID;
-	m_TexturePath = other.m_TexturePath;
-	m_Width = other.m_Width;
-	m_Height = other.m_Height;
-	m_bytesPerChannel = other.m_bytesPerChannel;
-	m_LastSlot = other.m_LastSlot;
-	other.m_HandlerID = 0;
-	index = i++;
-	std::cout << "texture moved" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << "//" << std::to_string(other.index) << "|" << std::to_string(other.m_HandlerID) << std::endl;
-}
-
-Texture& Texture::operator=(Texture&& other) noexcept
-{
-	std::cout << "texture moved with op=" << std::endl;
-	if (this != &other)
-	{
-		m_HandlerID = other.m_HandlerID;
-		m_TexturePath = other.m_TexturePath;
-		m_Width = other.m_Width;
-		m_Height = other.m_Height;
-		m_bytesPerChannel = other.m_bytesPerChannel;
-		m_LastSlot = other.m_LastSlot;
-		other.m_HandlerID = 0;
-		index = i++;
-		std::cout << "effectively moved" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << "//" << std::to_string(other.index) << "|" << std::to_string(other.m_HandlerID) << std::endl;
-	}
-	return *this;
 }
 
 void Texture::Bind(unsigned int slot)

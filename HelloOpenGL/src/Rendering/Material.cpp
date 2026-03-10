@@ -5,7 +5,7 @@
 
 Material::Material()
 {
-    std::cout << "material constructor" << std::endl;
+    //std::cout << "material constructor" << std::endl;
 }
 
 Material::~Material()

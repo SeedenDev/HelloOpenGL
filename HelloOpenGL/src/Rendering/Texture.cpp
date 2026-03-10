@@ -14,7 +14,7 @@ Texture::Texture(const std::string& texturePath)
 	SetupGLData();
 
 	index = i++;
-	std::cout << "texture(file) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
+	//std::cout << "texture(file) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
 Texture::Texture(const unsigned char* data, int length)
@@ -25,13 +25,13 @@ Texture::Texture(const unsigned char* data, int length)
 	SetupGLData();
 
 	index = i++;
-	std::cout << "texture(mem) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
+	//std::cout << "texture(mem) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
 Texture::~Texture()
 {
 	glDeleteTextures(1, &m_HandlerID);
-	std::cout << "texture destructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
+	//std::cout << "texture destructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
 void Texture::Bind(unsigned int slot)

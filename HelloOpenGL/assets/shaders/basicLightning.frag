@@ -100,6 +100,7 @@ void main()
 
     vec3 resultColor = vec3(0);
 
+    //TODO: ambient should not be additive. Objects should have an lighting ambient value.
     for(int i = 0; i < u_LightCount; i++)
     {
         Light light = u_Lights[i];

@@ -19,7 +19,7 @@ Mesh::~Mesh()
 	glDeleteVertexArrays(1, &m_Vao);
 	glDeleteBuffers(1, &m_Vbo);
 	glDeleteBuffers(1, &m_Ibo);
-	std::cout << "mesh destructor" << std::to_string(m_Vao) << "/" << std::to_string(m_Vbo) << "/" << std::to_string(m_Ibo) << "/" << std::endl;
+	//std::cout << "mesh destructor" << std::to_string(m_Vao) << "/" << std::to_string(m_Vbo) << "/" << std::to_string(m_Ibo) << "/" << std::endl;
 }
 
 void Mesh::Draw(Shader& shader)
@@ -68,7 +68,7 @@ Model::Model(const char* filePath, bool flipUVOnLoad)
 
 Model::~Model()
 {
-	std::cout << "model destructor" << std::endl;
+	//std::cout << "model destructor" << std::endl;
 }
 
 void Model::Draw(Shader& shader)
@@ -179,7 +179,7 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 
 int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
 {
-	std::cout << "Loading texture type " << std::to_string(type) << ": found " << std::to_string(mat->GetTextureCount(type)) << std::endl;
+	//std::cout << "Loading texture type " << std::to_string(type) << ": found " << std::to_string(mat->GetTextureCount(type)) << std::endl;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 	{
 		aiString texturePath;
@@ -191,7 +191,7 @@ int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
 		}
 		m_Textures.emplace_back(textureAssetPath);
 		m_CachedTextures.emplace(textureAssetPath, m_Textures.size() - 1); // in multithreaded content should have an atomic integer GetNextIndex() or smth like that ig
-		std::cout << "External texture loaded: " << textureAssetPath << std::endl;
+		//std::cout << "External texture loaded: " << textureAssetPath << std::endl;
 		return m_Textures.size() - 1;
 	}
 	return -1;
@@ -232,6 +232,6 @@ void Model::LoadEmbeddedTextures(const aiScene* scene)
 
 		m_Textures.emplace_back(textureData, texSize);
 		m_CachedTextures.emplace(m_AssetPath + "/*" + std::to_string(i), m_Textures.size() - 1);
-		std::cout << "Embedded texture loaded: *" << std::to_string(i) << std::endl;
+		//std::cout << "Embedded texture loaded: *" << std::to_string(i) << std::endl;
 	}
 }

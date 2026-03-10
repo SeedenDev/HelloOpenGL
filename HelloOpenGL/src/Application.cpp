@@ -87,21 +87,6 @@ int main(void)
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
 
-    double lastTime = glfwGetTime();
-    // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
-    double fpsCount = 60.0;
-    double fpsLimit = 1.0 / fpsCount;
-    bool unlimitedFPS = 1;
-    if (unlimitedFPS || fpsCount!=60.0)
-        appWindow.ToggleVsync();
-
-    // Average fps (not very satisfied with it)
-    const unsigned int fpsHistoryLimit = 1000;
-    const unsigned int averageFpsRefreshRate = 100;
-    double fpsHistory[fpsHistoryLimit] = { 0 };
-    unsigned int fpsPointer = 0;
-    int averageFps = 0;
-
     // Scene part
     Camera camera(appWindow.GetWindowPointer(), appWindow.GetAspectRatio());
 
@@ -194,6 +179,20 @@ int main(void)
     int tab = 0;
     int selectedItem = -1;
 
+    double lastTime = glfwGetTime();
+    // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
+    double fpsLimit = 60.0;
+    double deltaTimeLimit = 1.0 / fpsLimit;
+    bool unlimitedFPS = 1;
+    if (unlimitedFPS || fpsLimit != 60.0)
+        appWindow.ToggleVsync(); // Toggle off V-Sync
+
+    // Average fps
+    int averageFps = 0;
+    const size_t avgBufferSize = 50;
+    unsigned int avgBufferPtr = 0;
+    double avgBuffer[avgBufferSize] = { 0 };
+
     while (!appWindow.ShouldClose())
     {
         /* Poll for and process events */
@@ -210,23 +209,20 @@ int main(void)
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastTime;
 
-        if (vSync || (!vSync && (!unlimitedFPS && deltaTime >= fpsLimit) || (unlimitedFPS)))
+        if (vSync || (!vSync && (!unlimitedFPS && deltaTime >= deltaTimeLimit) || (unlimitedFPS)))
         {
             /* Fps counter */
             double fps = 1 / deltaTime;
-            double renderMs = 1000.0 / fps;
+            double msPerFrame = 1000.0 / fps;
 
-            fpsHistory[fpsPointer++] = fps;
-            if (fpsPointer >= fpsHistoryLimit) fpsPointer = 0;
-            if (fpsPointer >= averageFpsRefreshRate)
-            {
-                averageFps = 0;
-                for (double v : fpsHistory) averageFps += v;
-                averageFps /= fpsHistoryLimit;
-            }
+            avgBuffer[avgBufferPtr++] = fps;
+            if (avgBufferPtr >= avgBufferSize) avgBufferPtr = 0;
+            averageFps = 0;
+            for (double v : avgBuffer) averageFps += v;
+            averageFps /= avgBufferSize; /*if using msPerFrame: averageFps = 1000 * avgBufferSize / averageFps;*/
 
             std::string windowTitle =
-                "Hello OpenGL (FPS: " + std::to_string(fps) + " (avg:"+std::to_string(averageFps) + ") - " + std::to_string(renderMs) + "ms) DeltaTime:" + std::to_string(deltaTime);
+                "Hello OpenGL (FPS: " + std::to_string(fps) + " (avg:"+std::to_string(averageFps) + ") - " + std::to_string(msPerFrame) + "ms) DeltaTime:" + std::to_string(deltaTime);
 
             appWindow.SetTitle(windowTitle);
             lastTime = currentTime;

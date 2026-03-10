@@ -67,6 +67,20 @@ uniform bool u_FogEnabled;
 uniform float u_FogMin;
 uniform float u_FogMax;
 
+// Another experiment (from learnopengl.com => depth testing)
+float near = 0.1; 
+float far  = 100.0; 
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0 - 1.0;
+    return (2.0 * near * far) / (far + near - z * (far - near));	
+}
+float GetDepth()
+{
+    return LinearizeDepth(gl_FragCoord.z) / far;
+}
+
+
 /* Function prototypes */
 // Basic lightning
 vec3 CalcAmbient(vec3 lightAmbient, vec3 materialAmbient);
@@ -81,6 +95,8 @@ vec3 CalcAttenuationSpotlight(Light light, vec3 materialAmbient, vec3 materialDi
 
 void main()
 {
+    // Depth visual debugging: outColor = vec4(vec3(GetDepth()), 1.0);
+
     //TODO: use alpha for light calculation???
     vec4 materialDiffuseColorAlpha = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgba : vec4(u_Material.diffuseColor, 1);
     if(materialDiffuseColorAlpha.a<=0.5) discard; // for sponza scene bruh

@@ -254,6 +254,7 @@ int main(void)
             glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             //glDepthFunc(GL_LEQUAL);
+            //glDepthMask(GL_FALSE); => depth buffer read-only if needed
 
             doubleTextureShader.Bind();
             doubleTextureShader.SetUniform1f("u_Time", currentTime);

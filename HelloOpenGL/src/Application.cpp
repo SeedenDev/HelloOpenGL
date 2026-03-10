@@ -252,9 +252,18 @@ int main(void)
             else glDisable(GL_MULTISAMPLE);
 
             glEnable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_STENCIL_TEST);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
             //glDepthFunc(GL_LEQUAL);
             //glDepthMask(GL_FALSE); => depth buffer read-only if needed
+
+            //glStencilMask(0xFF); (default) => bitmask ANDed with the stencil value about to be written. Ex: 0x00 => 0&x=0 => disable writing => read-
+            /* Set the test function to determine if a fragment should pass or not. Params:
+                the fct that will test the stencil value with the ref value ; the actual ref value ; a bitmask ANDed with both stencil value & ref before the test */
+            // glStencilFunc(GL_EQUAL, 1, 0xFF);
+            /* Writing to the buffer : an action for 3 cases : if the stencil test fails; passes but depth fails; passes and depth passes too(default: KEEP everywhere) */
+            // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+            // => glStencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass) also exists, else it is set for both GL_FRONT_AND_BACK
 
             doubleTextureShader.Bind();
             doubleTextureShader.SetUniform1f("u_Time", currentTime);
@@ -269,15 +278,6 @@ int main(void)
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", square.GetColor());
             square.Draw();
             doubleTextureShader.Unbind();
-
-            basicUnlitShader.Bind();
-            //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for (int i = 0; i < lightsStack.size(); i++)
-            {
-                LightSource* light = lightsStack[i];//lights[i];
-                if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
-            }
-            basicUnlitShader.Unbind();
 
             basicLightningShader.Bind();
             basicLightningShader.SetUniformMat4f("u_View", view);
@@ -390,7 +390,21 @@ int main(void)
             //basicLightningShader.SetUniform1i("u_PointLightCount", pointLightCount);
             //basicLightningShader.SetUniform1i("u_SpotlightCount", spotlightCount);
 
-            // very bad because it's not instanced rendering
+            //Everything below: very bad because it's not instanced rendering
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+            //model = glm::scale(model, glm::vec3(30.0f));
+            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            MVP = projection * view * model;
+            basicLightningShader.SetUniformMat4f("u_Model", model);
+            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
+            //customModel.Draw(basicLightningShader);
+
+            // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes)
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
             for (unsigned int i = 0; i < cubes.size(); i++)
             {
                 Cube* cube = cubes[i];
@@ -400,18 +414,44 @@ int main(void)
                 MVP = projection * view * model;
                 basicLightningShader.SetUniformMat4f("u_Model", model);
                 basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-                //cube->Draw();
+                cube->Draw();
             }
-
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-            //model = glm::scale(model, glm::vec3(30.0f));
-            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            MVP = projection * view * model;
-            basicLightningShader.SetUniformMat4f("u_Model", model);
-            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-            customModel.Draw(basicLightningShader);
             basicLightningShader.Unbind();
+
+            basicUnlitShader.Bind();
+            glDepthFunc(GL_ALWAYS);
+            glStencilMask(0x00);
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+
+            basicUnlitShader.SetUniformVec4f("u_DynamicColor", glm::vec4(1.0f, 0.0f, 0.7f, 1.0f));
+            for (unsigned int i = 0; i < cubes.size(); i++)
+            {
+                Cube* cube = cubes[i];
+                float angle = 20.0f * i;
+                cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
+                model = cube->GetModelMatrix();
+                model = glm::scale(model, glm::vec3(1.1f));
+                MVP = projection * view * model;
+                basicUnlitShader.SetUniformMat4f("u_Model", model);
+                basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
+                cube->Draw();
+            }
+            glDepthFunc(GL_LESS);
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            // Both below not needed but I prefer resetting
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); 
+            glClear(GL_STENCIL_BUFFER_BIT);
+
+            //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
+            for (int i = 0; i < lightsStack.size(); i++)
+            {
+                LightSource* light = lightsStack[i];//lights[i];
+                if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
+            }
+            basicUnlitShader.Unbind();
+
+            //TODO: another imgui window for settings (fps, msaa, depth testing debug, ..)
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();

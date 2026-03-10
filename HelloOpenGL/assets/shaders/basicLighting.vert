@@ -1,7 +1,7 @@
 #version 330 core
 
 layout(location = 0) in vec4 pos;
-//layout(location = 1) in vec4 color; // for universal use of the same VAO (lit/unlit scenarios) but useless for this lightning shader (=> use of material properties)
+//layout(location = 1) in vec4 color; // for universal use of the same VAO (lit/unlit scenarios) but useless for this lighting shader (=> use of material properties)
 layout(location = 2) in vec2 tex;
 layout(location = 3) in vec3 normal; 
 

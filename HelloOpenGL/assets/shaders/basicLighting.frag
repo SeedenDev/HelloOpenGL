@@ -29,7 +29,7 @@ struct Light
 {
     vec4 position; // with global/point/spot
     vec4 direction; // with directional/spot
-    vec4 ambient; // usually low intensity because it's ambient lightning
+    vec4 ambient; // usually low intensity because it's ambient lighting
     vec4 diffuse; // the exact color of the light
     vec4 specular; // shining intensity
     // point light attenuation parameters
@@ -61,6 +61,7 @@ uniform Light u_Spotlights[10];*/
 
 uniform vec3 u_CameraPos;
 uniform float u_Time;
+uniform int u_VisualDebugMode;
 
 // Just an experiment because I saw this code and it was fun to test
 uniform bool u_FogEnabled;
@@ -80,33 +81,39 @@ float GetDepth()
     return LinearizeDepth(gl_FragCoord.z) / far;
 }
 
-
 /* Function prototypes */
-// Basic lightning
-vec3 CalcAmbient(vec3 lightAmbient, vec3 materialAmbient);
-vec3 CalcDiffuse(vec3 lightDiffuse, vec3 materialDiffuse, vec3 normal, vec3 lightFragDir);
-vec3 CalcSpecular(vec3 lightSpecular, vec3 materialSpecular, vec3 normal, vec3 lightFragDir, vec3 viewDir);
+// Basic lighting
+vec4 CalcAmbient(vec3 lightAmbient, vec4 materialAmbient);
+vec4 CalcDiffuse(vec3 lightDiffuse, vec4 materialDiffuse, vec3 normal, vec3 lightFragDir);
+vec4 CalcSpecular(vec3 lightSpecular, vec4 materialSpecular, vec3 normal, vec3 lightFragDir, vec3 viewDir);
 // Light types
-vec3 CalcGlobalLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
-vec3 CalcDirLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
-vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
-vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
-vec3 CalcAttenuationSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir);
+vec4 CalcGlobalLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir);
+vec4 CalcDirLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir);
+vec4 CalcPointLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir);
+vec4 CalcSpotlight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir);
+vec4 CalcAttenuationSpotlight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir);
 
 void main()
 {
-    // Depth visual debugging: outColor = vec4(vec3(GetDepth()), 1.0);
+    if(u_VisualDebugMode==1)
+    {
+        outColor = vec4(vec3(GetDepth()), 1.0);
+        return;
+    }
+    else if(u_VisualDebugMode==2)
+    {
+        outColor = vec4(normalize(vertexComputedNormal), 1.0);
+        return;
+    }
 
-    //TODO: use alpha for light calculation???
-    vec4 materialDiffuseColorAlpha = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgba : vec4(u_Material.diffuseColor, 1);
-    if(materialDiffuseColorAlpha.a<=0.5) discard; // for sponza scene bruh
-    vec3 materialDiffuseColor = materialDiffuseColorAlpha.rgb;
-    vec3 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : u_Material.ambientColor;
-    vec3 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex).rgb : u_Material.specularColor;
+    vec4 materialDiffuseColor = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex) : vec4(u_Material.diffuseColor, 1);
+    if(materialDiffuseColor.a<=0.5) discard; // for sponza scene bruh
+    vec4 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : vec4(u_Material.ambientColor, 1);
+    vec4 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex) : vec4(u_Material.specularColor, 1);
     materialSpecularColor *= u_Material.specularStrength;
-    vec3 materialEmissiveColor = u_Material.hasEmissive ? texture(u_Material.emissiveMap, vertexTex/*+vec2(0, u_Time)*/).rgb : u_Material.emissiveColor;
+    vec4 materialEmissiveColor = u_Material.hasEmissive ? texture(u_Material.emissiveMap, vertexTex/*+vec2(0, u_Time)*/): vec4(u_Material.emissiveColor, 1);
     //TODO: see if emission should really have a mask depending on the specular in any situation or if it just here (thinking about animated textures, seems a great challenge with emission)
-    vec3 emissiveMask = step(vec3(1), vec3(1)-materialSpecularColor);
+    vec4 emissiveMask = step(vec4(1), vec4(1)-materialSpecularColor);
     materialEmissiveColor *= emissiveMask;
 
     vec3 normal = normalize(vertexComputedNormal);
@@ -114,7 +121,7 @@ void main()
     float viewDist = length(viewDir);
     viewDir = normalize(viewDir);
 
-    vec3 resultColor = vec3(0);
+    vec4 resultColor = vec4(0);
 
     //TODO: ambient should not be additive. Objects should have an lighting ambient value.
     for(int i = 0; i < u_LightCount; i++)
@@ -132,7 +139,7 @@ void main()
     for(int i = 0; i < u_SpotlightCount; i++) resultColor += CalcSpotlight(u_Spotlights[i], materialBaseColor, materialBaseColor, materialSpecularIntensity, normal, viewDir);
     */
 
-    vec4 finalColor = vec4(resultColor + materialEmissiveColor, 1.0);
+    vec4 finalColor = resultColor + materialEmissiveColor;
 
     // Fog test (to move to a special shader when I know how to combine shaders without having to do 2 draw calls)
     if(u_FogEnabled)
@@ -146,32 +153,32 @@ void main()
 }
 
 // Light types
-vec3 CalcGlobalLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
+vec4 CalcGlobalLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
-    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
-    vec3 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
-    vec3 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
+    vec4 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec4 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec4 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
     return ambient + diffuse + specular;
 }
-vec3 CalcDirLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
+vec4 CalcDirLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(light.direction.xyz);
-    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
-    vec3 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightDir);
-    vec3 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightDir, viewDir);
+    vec4 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec4 diffuse = CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightDir);
+    vec4 specular = CalcSpecular(light.specular.rgb, materialSpecular, normal, lightDir, viewDir);
     return ambient + diffuse + specular;
 }
-vec3 CalcPointLight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
+vec4 CalcPointLight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightFragDir = light.position.xyz - vertexWorldPos;
     float lightDist = length(lightFragDir);
     lightFragDir = normalize(lightFragDir);
     float attenuation = 1.0 / (light.constant + light.linear * lightDist + light.quadratic * (lightDist*lightDist));
 
-    vec3 ambient = attenuation * CalcAmbient(light.ambient.rgb, materialAmbient);
-    vec3 diffuse = attenuation * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
-    vec3 specular = attenuation * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
+    vec4 ambient = attenuation * CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec4 diffuse = attenuation * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec4 specular = attenuation * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
     return ambient + diffuse + specular;
 }
 
@@ -182,7 +189,7 @@ in vec4 vertexScreenPos;
 in vec4 vertexBasePos;
 uniform sampler2D u_SpotlightTexture;
 */
-vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3 materialSpecular, vec3 normal, vec3 viewDir)
+vec4 CalcSpotlight(Light light, vec4 materialAmbient, vec4 materialDiffuse, vec4 materialSpecular, vec3 normal, vec3 viewDir)
 {
     vec3 lightFragDir = normalize(light.position.xyz - vertexWorldPos);
 
@@ -194,9 +201,9 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
     float epsilon = light.innerCutOff - light.outerCutOff;
     float lightIntensity = clamp((theta-light.outerCutOff)/epsilon, 0.0, 1.0);
 
-    vec3 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
-    vec3 diffuse = lightIntensity * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
-    vec3 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
+    vec4 ambient = CalcAmbient(light.ambient.rgb, materialAmbient);
+    vec4 diffuse = lightIntensity * CalcDiffuse(light.diffuse.rgb, materialDiffuse, normal, lightFragDir);
+    vec4 specular = lightIntensity * CalcSpecular(light.specular.rgb, materialSpecular, normal, lightFragDir, viewDir);
 
     // Texture projection (for future impl: https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Cookies)
     /*vec4 textureProjection = (u_Projection * u_View * light.position) * vec4(vertexWorldPos, 1.0);
@@ -213,22 +220,22 @@ vec3 CalcSpotlight(Light light, vec3 materialAmbient, vec3 materialDiffuse, vec3
     return ambient + diffuse + specular;
 }
 
-// Basic lightning
-vec3 CalcAmbient(vec3 lightAmbient, vec3 materialAmbient)
+// Basic lighting
+vec4 CalcAmbient(vec3 lightAmbient, vec4 materialAmbient)
 {
-    return lightAmbient * materialAmbient;
+    return vec4(lightAmbient, 1) * materialAmbient;
 }
 
-vec3 CalcDiffuse(vec3 lightDiffuse, vec3 materialDiffuse, vec3 normal, vec3 lightFragDir)
+vec4 CalcDiffuse(vec3 lightDiffuse, vec4 materialDiffuse, vec3 normal, vec3 lightFragDir)
 {
     float diffuseStrength = max(dot(normal, lightFragDir), 0.0);
-    return (materialDiffuse * diffuseStrength) * lightDiffuse;
+    return (materialDiffuse * diffuseStrength) * vec4(lightDiffuse, 1);
 }
 
-vec3 CalcSpecular(vec3 lightSpecular, vec3 materialSpecular, vec3 normal, vec3 lightFragDir, vec3 viewDir)
+vec4 CalcSpecular(vec3 lightSpecular, vec4 materialSpecular, vec3 normal, vec3 lightFragDir, vec3 viewDir)
 {
-    if(u_Material.shininess==0) return vec3(0); // Ignore specular
+    if(u_Material.shininess==0) return vec4(0); // Ignore specular
     vec3 reflectDir = reflect(-lightFragDir, normal);
     float specularFactor = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
-    return (materialSpecular * specularFactor) * lightSpecular;
+    return (materialSpecular * specularFactor) * vec4(lightSpecular, 1);
 }

@@ -49,6 +49,7 @@ int main(void)
     Texture white("assets/textures/1x1_white.png");
     Texture texture0((unsigned char*)imgData.c_str(), imgData.size());
     Texture texture1((unsigned char*)imgData2.c_str(), imgData2.size());
+    Texture windowTexture("assets/textures/window.png");
     Texture diffuseMapTexture("assets/textures/container_diffuse.png");
     Texture specularMapTexture("assets/textures/container_specular.png");
     Texture emissiveMapTexture("assets/textures/container_emissive.png");
@@ -57,6 +58,7 @@ int main(void)
     white.Bind(5);
     texture0.Bind(0);
     texture1.Bind(1);
+    windowTexture.Bind(2);
     diffuseMapTexture.Bind(10);
     specularMapTexture.Bind(11);
     emissiveMapTexture.Bind(12);
@@ -72,13 +74,13 @@ int main(void)
     doubleTextureShader.Unbind();
 
     // Light part
-    Shader basicLightningShader("assets/shaders/basicLightning.vert", "assets/shaders/basicLightning.frag");
+    Shader basicLightingShader("assets/shaders/basicLighting.vert", "assets/shaders/basicLighting.frag");
     /*SPOTLIGHT TEST:
-    basicLightningShader.Bind();
+    basicLightingShader.Bind();
     Texture spotlightTexture("assets/textures/test2.png");
     spotlightTexture.Bind(5);
-    basicLightningShader.SetUniform1i("u_SpotlightTexture", 5);
-    basicLightningShader.Unbind();*/
+    basicLightingShader.SetUniform1i("u_SpotlightTexture", 5);
+    basicLightingShader.Unbind();*/
 
     // Model loading tests
     //Model customModel("assets/models/columbina/columbina.obj", 0);
@@ -141,9 +143,9 @@ int main(void)
     };
     std::vector<LightStruct> lightsData;
 
-    GLuint ssbLocation = glGetProgramResourceIndex(basicLightningShader.GetHandlerID(), GL_SHADER_STORAGE_BLOCK, "u_LightsBuffer");
+    GLuint ssbLocation = glGetProgramResourceIndex(basicLightingShader.GetHandlerID(), GL_SHADER_STORAGE_BLOCK, "u_LightsBuffer");
     unsigned int ssbBinding = 0;
-    glShaderStorageBlockBinding(basicLightningShader.GetHandlerID(), ssbLocation, ssbBinding);
+    glShaderStorageBlockBinding(basicLightingShader.GetHandlerID(), ssbLocation, ssbBinding);
     unsigned int lightsSSBO;
     glGenBuffers(1, &lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
@@ -178,10 +180,14 @@ int main(void)
     bool enableMsaa = 1;
     int tab = 0;
     int selectedItem = -1;
+    bool enableOutline = 0;
+    glm::vec4 outlineColor(1.0f, 0.0f, 0.7f, 1.0f);
+    int visualDebugMode = 0; // 0=none ; 1=depth buffer ; 2=normals
+    const char* visualDebugList[]{ "None", "Depth Buffer", "Normals" };
 
     double lastTime = glfwGetTime();
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
-    double fpsLimit = 60.0;
+    float fpsLimit = 60.0;
     double deltaTimeLimit = 1.0 / fpsLimit;
     bool unlimitedFPS = 1;
     if (unlimitedFPS || fpsLimit != 60.0)
@@ -191,7 +197,7 @@ int main(void)
     int averageFps = 0;
     const size_t avgBufferSize = 50;
     unsigned int avgBufferPtr = 0;
-    double avgBuffer[avgBufferSize] = { 0 };
+    float avgBuffer[avgBufferSize] = { 0 };
 
     while (!appWindow.ShouldClose())
     {
@@ -212,17 +218,17 @@ int main(void)
         if (vSync || (!vSync && (!unlimitedFPS && deltaTime >= deltaTimeLimit) || (unlimitedFPS)))
         {
             /* Fps counter */
-            double fps = 1 / deltaTime;
+            float fps = 1 / deltaTime;
             double msPerFrame = 1000.0 / fps;
 
             avgBuffer[avgBufferPtr++] = fps;
             if (avgBufferPtr >= avgBufferSize) avgBufferPtr = 0;
             averageFps = 0;
-            for (double v : avgBuffer) averageFps += v;
+            for (float v : avgBuffer) averageFps += v;
             averageFps /= avgBufferSize; /*if using msPerFrame: averageFps = 1000 * avgBufferSize / averageFps;*/
 
             std::string windowTitle =
-                "Hello OpenGL (FPS: " + std::to_string(fps) + " (avg:"+std::to_string(averageFps) + ") - " + std::to_string(msPerFrame) + "ms) DeltaTime:" + std::to_string(deltaTime);
+                "Hello OpenGL (FPS: " + std::to_string(fps) + " (avg:" + std::to_string(averageFps) + ") - " + std::to_string(msPerFrame) + "ms) DeltaTime:" + std::to_string(deltaTime);
 
             appWindow.SetTitle(windowTitle);
             lastTime = currentTime;
@@ -238,7 +244,7 @@ int main(void)
                 doubleTextureShader.SetUniform1i("u_TextureLower", 0);
                 doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
                 doubleTextureShader.Unbind(); // not really necessary because next call is the same bind
-                basicLightningShader.Reload();
+                basicLightingShader.Reload();
             }
             appWindow.Update();
             camera.Update(deltaTime);
@@ -276,33 +282,24 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", square.GetColor());
-            square.Draw();
+            //square.Draw();
             doubleTextureShader.Unbind();
 
-            basicLightningShader.Bind();
-            basicLightningShader.SetUniformMat4f("u_View", view);
-            basicLightningShader.SetUniformMat4f("u_Projection", projection);
-            basicLightningShader.SetUniform1f("u_FogEnabled", enableFog);
-            basicLightningShader.SetUniform1f("u_FogMin", fogMinDist);
-            basicLightningShader.SetUniform1f("u_FogMax", fogMaxDist);
-            basicLightningShader.SetUniform1f("u_Time", currentTime); // for emissive texture cool animation
-            basicLightningShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
-            // everything set by hand because Material can't really retrieve a texture because for now the system
-            // is tied to the Model loader and not to an asset system
-            basicLightningShader.SetUniform1i("u_Material.hasDiffuse", 1);
-            basicLightningShader.SetUniform1i("u_Material.hasSpecular", 1);
-            basicLightningShader.SetUniform1i("u_Material.hasEmissive", 1);
-            basicLightningShader.SetUniform1i("u_Material.diffuseMap", 10);
-            basicLightningShader.SetUniform1i("u_Material.specularMap", 11);
-            basicLightningShader.SetUniform1i("u_Material.emissiveMap", 12);
-            basicLightningShader.SetUniform1f("u_Material.shininess", 64.f);
-            basicLightningShader.SetUniform1f("u_Material.specularStrength", 1.0f);
-
+            basicLightingShader.Bind();
+            basicLightingShader.SetUniformMat4f("u_View", view);
+            basicLightingShader.SetUniformMat4f("u_Projection", projection);
+            basicLightingShader.SetUniform1i("u_FogEnabled", enableFog);
+            basicLightingShader.SetUniform1f("u_FogMin", fogMinDist);
+            basicLightingShader.SetUniform1f("u_FogMax", fogMaxDist);
+            basicLightingShader.SetUniform1f("u_Time", currentTime); // for emissive texture cool animation
+            basicLightingShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
+            basicLightingShader.SetUniform1i("u_VisualDebugMode", visualDebugMode);
+            
             lightsData.reserve(lightsStack.size());
             //TODO: the Common interfaces thing could be removed with proper implementations i think.. (btw I read CPP casts are now faster that C-style ones on modern compiler so..)
             int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for(int i = 0; i < lightsStack.size(); i++)
+            for (int i = 0; i < lightsStack.size(); i++)
             {
                 LightSource* light = lightsStack[i];//lights[i];
                 if (!light->IsToggled()) continue;
@@ -317,52 +314,52 @@ int main(void)
                 switch (light->GetType())
                 {
                 case LightType::GLOBAL:
-                    {
-                        GlobalLight* gl = static_cast<GlobalLight*>(light);
-                        uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
-                        //basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
-                        data.position = glm::vec4(static_cast<Common::HasPosition*>(gl)->GetPosition(), 0.0f);
-                        globalLightCount++;
-                    }   break;
+                {
+                    GlobalLight* gl = static_cast<GlobalLight*>(light);
+                    uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
+                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
+                    data.position = glm::vec4(static_cast<Common::HasPosition*>(gl)->GetPosition(), 0.0f);
+                    globalLightCount++;
+                }   break;
                 case LightType::DIRECTIONAL:
-                    {
-                        DirectionalLight* dl = static_cast<DirectionalLight*>(light);
-                        uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
-                        //basicLightningShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
-                        data.direction = glm::vec4(static_cast<Common::HasDirection*>(dl)->GetDirection(), 0.0f);
-                        directionalLightCount++;
-                    }   break;
+                {
+                    DirectionalLight* dl = static_cast<DirectionalLight*>(light);
+                    uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
+                    //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
+                    data.direction = glm::vec4(static_cast<Common::HasDirection*>(dl)->GetDirection(), 0.0f);
+                    directionalLightCount++;
+                }   break;
                 case LightType::POINT:
-                    {
-                        PointLight* pl = static_cast<PointLight*>(light);
-                        uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
-                        //basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
-                        //basicLightningShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
-                        //basicLightningShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
-                        //basicLightningShader.SetUniform1f(uniform + ".quadratic", pl->GetQuadratic());
-                        data.position = glm::vec4(static_cast<Common::HasPosition*>(pl)->GetPosition(), 0.0f);
-                        data.constant = pl->GetConstant();
-                        data.linear = pl->GetLinear();
-                        data.quadratic = pl->GetQuadratic();
-                        pointLightCount++;
-                    }   break;
+                {
+                    PointLight* pl = static_cast<PointLight*>(light);
+                    uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
+                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
+                    //basicLightingShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
+                    //basicLightingShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
+                    //basicLightingShader.SetUniform1f(uniform + ".quadratic", pl->GetQuadratic());
+                    data.position = glm::vec4(static_cast<Common::HasPosition*>(pl)->GetPosition(), 0.0f);
+                    data.constant = pl->GetConstant();
+                    data.linear = pl->GetLinear();
+                    data.quadratic = pl->GetQuadratic();
+                    pointLightCount++;
+                }   break;
                 case LightType::SPOTLIGHT:
-                    {
-                        Spotlight* sl = static_cast<Spotlight*>(light);
-                        uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
-                        //basicLightningShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
-                        //basicLightningShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
-                        //basicLightningShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
-                        //basicLightningShader.SetUniform1f(uniform + ".outerCutOff", sl->GetComputedOuterCutOff());
-                        data.position = glm::vec4(static_cast<Common::HasPosition*>(sl)->GetPosition(), 0.0f);
-                        data.direction = glm::vec4(static_cast<Common::HasDirection*>(sl)->GetDirection(), 0.0f);
-                        data.innerCutOff = sl->GetComputedInnerCutOff();
-                        data.outerCutOff = sl->GetComputedOuterCutOff();
-                        spotlightCount++;
-                    }   break;
+                {
+                    Spotlight* sl = static_cast<Spotlight*>(light);
+                    uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
+                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
+                    //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
+                    //basicLightingShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
+                    //basicLightingShader.SetUniform1f(uniform + ".outerCutOff", sl->GetComputedOuterCutOff());
+                    data.position = glm::vec4(static_cast<Common::HasPosition*>(sl)->GetPosition(), 0.0f);
+                    data.direction = glm::vec4(static_cast<Common::HasDirection*>(sl)->GetDirection(), 0.0f);
+                    data.innerCutOff = sl->GetComputedInnerCutOff();
+                    data.outerCutOff = sl->GetComputedOuterCutOff();
+                    spotlightCount++;
+                }   break;
                 case LightType::FLASHLIGHT:
                 {
-                    Flashlight* fl = static_cast<Flashlight*>(light); 
+                    Flashlight* fl = static_cast<Flashlight*>(light);
                     data.position = glm::vec4(fl->GetPosition(), 0.0f);
                     data.direction = glm::vec4(fl->GetDirection(), 0.0f);
                     data.innerCutOff = fl->GetComputedInnerCutOff();
@@ -370,13 +367,13 @@ int main(void)
                     spotlightCount++;
                 }   break;
                 }
-                //basicLightningShader.SetUniformVec3f(uniform + ".ambient", light->GetAmbientColor());
-                //basicLightningShader.SetUniformVec3f(uniform + ".diffuse", light->GetDiffuseColor());
-                //basicLightningShader.SetUniformVec3f(uniform + ".specular", light->GetSpecularColor());
+                //basicLightingShader.SetUniformVec3f(uniform + ".ambient", light->GetAmbientColor());
+                //basicLightingShader.SetUniformVec3f(uniform + ".diffuse", light->GetDiffuseColor());
+                //basicLightingShader.SetUniformVec3f(uniform + ".specular", light->GetSpecularColor());
 
                 lightsData.emplace_back(data);
             }
-            basicLightningShader.SetUniform1i("u_LightCount", lightsData.size());
+            basicLightingShader.SetUniform1i("u_LightCount", lightsData.size());
             if (lightsData.size() > 0)
             {
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
@@ -385,26 +382,40 @@ int main(void)
             }
             lightsData.clear();
 
-            //basicLightningShader.SetUniform1i("u_GlobalLightCount", globalLightCount);
-            //basicLightningShader.SetUniform1i("u_DirectionalLightCount", directionalLightCount);
-            //basicLightningShader.SetUniform1i("u_PointLightCount", pointLightCount);
-            //basicLightningShader.SetUniform1i("u_SpotlightCount", spotlightCount);
+            //basicLightingShader.SetUniform1i("u_GlobalLightCount", globalLightCount);
+            //basicLightingShader.SetUniform1i("u_DirectionalLightCount", directionalLightCount);
+            //basicLightingShader.SetUniform1i("u_PointLightCount", pointLightCount);
+            //basicLightingShader.SetUniform1i("u_SpotlightCount", spotlightCount);
 
             //Everything below: very bad because it's not instanced rendering
+#ifndef CUBE
             model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-            //model = glm::scale(model, glm::vec3(30.0f));
+            model = glm::scale(model, glm::vec3(0.5f));
             model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             MVP = projection * view * model;
-            basicLightningShader.SetUniformMat4f("u_Model", model);
-            basicLightningShader.SetUniformMat4f("u_MVP", MVP);
-            //customModel.Draw(basicLightningShader);
+            basicLightingShader.SetUniformMat4f("u_Model", model);
+            basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+            customModel.Draw(basicLightingShader);
+#else
+            // everything set by hand because Material can't really retrieve a texture because for now the system
+            // is tied to the Model loader and not to an asset system
+            basicLightingShader.SetUniform1i("u_Material.hasDiffuse", 1);
+            basicLightingShader.SetUniform1i("u_Material.hasSpecular", 1);
+            basicLightingShader.SetUniform1i("u_Material.hasEmissive", 1);
+            basicLightingShader.SetUniform1i("u_Material.diffuseMap", 10);
+            basicLightingShader.SetUniform1i("u_Material.specularMap", 11);
+            basicLightingShader.SetUniform1i("u_Material.emissiveMap", 12);
+            basicLightingShader.SetUniform1f("u_Material.shininess", 64.f);
+            basicLightingShader.SetUniform1f("u_Material.specularStrength", 1.0f);
 
-            // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes)
-            glStencilMask(0xFF);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
+            // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes
+            if (enableOutline)
+            {
+                glStencilMask(0xFF);
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            }
             for (unsigned int i = 0; i < cubes.size(); i++)
             {
                 Cube* cube = cubes[i];
@@ -412,37 +423,41 @@ int main(void)
                 cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                 model = cube->GetModelMatrix();
                 MVP = projection * view * model;
-                basicLightningShader.SetUniformMat4f("u_Model", model);
-                basicLightningShader.SetUniformMat4f("u_MVP", MVP);
+                basicLightingShader.SetUniformMat4f("u_Model", model);
+                basicLightingShader.SetUniformMat4f("u_MVP", MVP);
                 cube->Draw();
             }
-            basicLightningShader.Unbind();
-
+#endif
+            basicLightingShader.Unbind();
             basicUnlitShader.Bind();
-            glDepthFunc(GL_ALWAYS);
-            glStencilMask(0x00);
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-
-            basicUnlitShader.SetUniformVec4f("u_DynamicColor", glm::vec4(1.0f, 0.0f, 0.7f, 1.0f));
-            for (unsigned int i = 0; i < cubes.size(); i++)
+#ifdef CUBE
+            if (enableOutline)
             {
-                Cube* cube = cubes[i];
-                float angle = 20.0f * i;
-                cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
-                model = cube->GetModelMatrix();
-                model = glm::scale(model, glm::vec3(1.1f));
-                MVP = projection * view * model;
-                basicUnlitShader.SetUniformMat4f("u_Model", model);
-                basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
-                cube->Draw();
+                glDepthFunc(GL_ALWAYS);
+                glStencilMask(0x00);
+                glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            
+                basicUnlitShader.SetUniformVec4f("u_DynamicColor", outlineColor);
+                for (unsigned int i = 0; i < cubes.size(); i++)
+                {
+                    Cube* cube = cubes[i];
+                    float angle = 20.0f * i;
+                    cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
+                    model = cube->GetModelMatrix();
+                    model = glm::scale(model, glm::vec3(1.1f));
+                    MVP = projection * view * model;
+                    basicUnlitShader.SetUniformMat4f("u_Model", model);
+                    basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
+                    cube->Draw();
+                }
+                glDepthFunc(GL_LESS);
+                glStencilMask(0xFF);
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                // Both below not needed but I prefer resetting
+                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                glClear(GL_STENCIL_BUFFER_BIT);
             }
-            glDepthFunc(GL_LESS);
-            glStencilMask(0xFF);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            // Both below not needed but I prefer resetting
-            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); 
-            glClear(GL_STENCIL_BUFFER_BIT);
-
+#endif
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
             for (int i = 0; i < lightsStack.size(); i++)
             {
@@ -451,12 +466,18 @@ int main(void)
             }
             basicUnlitShader.Unbind();
 
-            //TODO: another imgui window for settings (fps, msaa, depth testing debug, ..)
-
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             {
+                ImGui::BeginTabBar("Info");
+                const glm::vec3& camPos = camera.GetPosition();
+                ImGui::Text("Camera:");
+                ImGui::Text("%.2f;%.2f;%.2f (%.2f;%.2f)", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch());
+                ImGui::Text("FOV: %.1f", camera.GetFOV());
+                float imguiFps = ImGui::GetIO().Framerate;
+                ImGui::Text("Avg: %.3f ms/frame (%.1f FPS)", 1000.0 / imguiFps, imguiFps);
+                ImGui::EndTabBar();
                 ImGui::Begin("Scene editor");
                 ImGui::BeginTabBar("Objects");
                 if (ImGui::BeginTabItem("Lights"))
@@ -528,11 +549,8 @@ int main(void)
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
-                ImGui::BeginTabBar("firstseparator");
-                ImGui::EndTabBar();
-                //--------------------------------------
-                const glm::vec3& camPos = camera.GetPosition();
-                ImGui::Text("Camera: %.2f;%.2f;%.2f (%.2f;%.2f) - FOV: %.1f", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch(), camera.GetFOV());
+                ImGui::End();
+                ImGui::Begin("Settings");
                 float camSpeed[] = { camera.GetHorizontalSpeed(), camera.GetVerticalSpeed() };
                 if (ImGui::SliderFloat2("CamSpeed", camSpeed, 0.0f, 1000.0f))
                 {
@@ -543,10 +561,21 @@ int main(void)
                 ImGui::SliderFloat("FogMin", &fogMinDist, 0.0f, 1000.0f);
                 ImGui::SliderFloat("FogMax", &fogMaxDist, 0.0f, 1000.0f);
                 ImGui::Checkbox("MSAA", &enableMsaa);
+                ImGui::Combo("Visual debug", &visualDebugMode, visualDebugList, IM_ARRAYSIZE(visualDebugList));
+                ImGui::Checkbox("Cube outline", &enableOutline);
+                if (enableOutline) ImGui::ColorEdit4("Outline", &outlineColor[0]);
+                if (ImGui::Checkbox("VSync", &vSync)) appWindow.ToggleVsync();
+                if (!vSync)
+                {
+                    ImGui::Checkbox("Unlimited FPS", &unlimitedFPS);
+                    if(!unlimitedFPS)
+                    {
+                        ImGui::SameLine();
+                        if(ImGui::SliderFloat("FPS limit", &fpsLimit, 0.0, 200.0)) deltaTimeLimit = 1.0 / fpsLimit;
+                    }
+                }
                 if (ImGui::ColorEdit3("ClearColor", &clearColor[0])) glClearColor(clearColor.r, clearColor.g, clearColor.b, 1.0f);
-                float imguiFps = ImGui::GetIO().Framerate;
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0/imguiFps, imguiFps);
-                ImGui::End();                
+                ImGui::End();
             }
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

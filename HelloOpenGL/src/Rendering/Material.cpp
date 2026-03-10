@@ -1,6 +1,7 @@
 #include "Material.h"
 
 #include <glm/vec3.hpp>
+#include <string>
 
 Material::Material()
 {

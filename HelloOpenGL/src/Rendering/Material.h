@@ -12,7 +12,7 @@ private:
 	glm::vec3 m_SpecularColor = glm::vec3(.0f, .0f, .0f);
 	glm::vec3 m_EmissiveColor = glm::vec3(.0f, .0f, .0f);
 	float m_SpecularShininess = 64.0f; // specular exponent
-	float m_SpecularStrength = .0f; // scales specular color
+	float m_SpecularStrength = 1.0f; // scales specular color
 	//TODO: reference to the texture stored in an asset system with all the loaded textures so no duplicated if loading a model twice.
 	int m_DiffuseTexture = -1; // also used for ambient
 	int m_SpecularTexture = -1;

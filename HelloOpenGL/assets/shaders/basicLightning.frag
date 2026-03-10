@@ -83,10 +83,10 @@ void main()
 {
     //TODO: use alpha for light calculation???
     vec4 materialDiffuseColorAlpha = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex).rgba : vec4(u_Material.diffuseColor, 1);
-    if(materialDiffuseColorAlpha.a<0.5) discard; // for sponza scene bruh
+    if(materialDiffuseColorAlpha.a<=0.5) discard; // for sponza scene bruh
     vec3 materialDiffuseColor = materialDiffuseColorAlpha.rgb;
     vec3 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : u_Material.ambientColor;
-    vec3 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex).rgb : u_Material.specularColor; 
+    vec3 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex).rgb : u_Material.specularColor;
     materialSpecularColor *= u_Material.specularStrength;
     vec3 materialEmissiveColor = u_Material.hasEmissive ? texture(u_Material.emissiveMap, vertexTex/*+vec2(0, u_Time)*/).rgb : u_Material.emissiveColor;
     //TODO: see if emission should really have a mask depending on the specular in any situation or if it just here (thinking about animated textures, seems a great challenge with emission)
@@ -94,7 +94,7 @@ void main()
     materialEmissiveColor *= emissiveMask;
 
     vec3 normal = normalize(vertexComputedNormal);
-    vec3 viewDir = vertexWorldPos - u_CameraPos;
+    vec3 viewDir = u_CameraPos - vertexWorldPos;
     float viewDist = length(viewDir);
     viewDir = normalize(viewDir);
 
@@ -210,7 +210,8 @@ vec3 CalcDiffuse(vec3 lightDiffuse, vec3 materialDiffuse, vec3 normal, vec3 ligh
 
 vec3 CalcSpecular(vec3 lightSpecular, vec3 materialSpecular, vec3 normal, vec3 lightFragDir, vec3 viewDir)
 {
-    vec3 reflectDir = reflect(lightFragDir, normal);
+    if(u_Material.shininess==0) return vec3(0); // Ignore specular
+    vec3 reflectDir = reflect(-lightFragDir, normal);
     float specularFactor = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
     return (materialSpecular * specularFactor) * lightSpecular;
 }

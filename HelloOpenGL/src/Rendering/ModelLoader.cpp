@@ -100,6 +100,7 @@ void Model::Draw(Shader& shader)
 //private
 void Model::Load()
 {
+	std::cout << "Loading model " << m_AssetPath << std::endl;
 	Assimp::Importer importer;
 	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_EMBEDDED_TEXTURES_LEGACY_NAMING, 1);
 	unsigned int importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
@@ -168,7 +169,6 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 		aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
 		//TODO: smth to cache materials and so in Mesh no material stored, only reference to an existing one (avoid duplicated item+batch rendering of every mesh using the same mat in the future)
 		// => well, jus the matIndex lmao
-		GetMaterialTextureIndex(mat, aiTextureType_AMBIENT);
 		material.SetDiffuseTexture(GetMaterialTextureIndex(mat, aiTextureType_DIFFUSE));
 		material.SetSpecularTexture(GetMaterialTextureIndex(mat, aiTextureType_SPECULAR));
 		material.SetEmissiveTexture(GetMaterialTextureIndex(mat, aiTextureType_EMISSIVE));
@@ -200,7 +200,7 @@ int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
 void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 {
 	aiColor3D color(0.f, 0.f, 0.f);
-	float shininess;
+	float value = 0.0f;
 
 	mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
 	outMaterial.SetAmbientColor(glm::vec3(color.r, color.b, color.g));
@@ -214,11 +214,11 @@ void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 	mat->Get(AI_MATKEY_COLOR_EMISSIVE, color);
 	outMaterial.SetEmissiveColor(glm::vec3(color.r, color.b, color.g));
 
-	mat->Get(AI_MATKEY_SHININESS, shininess);
-	outMaterial.SetSpecularShininess(shininess);
+	mat->Get(AI_MATKEY_SHININESS, value);
+	outMaterial.SetSpecularShininess(value);
 
-	mat->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
-	outMaterial.SetSpecularStrength(shininess);
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS_STRENGTH, value)) value = 1.0f;
+	outMaterial.SetSpecularStrength(value);
 }
 
 void Model::LoadEmbeddedTextures(const aiScene* scene)

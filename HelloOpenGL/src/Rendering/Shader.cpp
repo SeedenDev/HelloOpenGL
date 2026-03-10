@@ -22,6 +22,7 @@ void Shader::Reload()
         return;
     }
     glDeleteProgram(m_HandlerID);
+    m_UniformLocations.clear();
     m_HandlerID = rendererID;
 }
 

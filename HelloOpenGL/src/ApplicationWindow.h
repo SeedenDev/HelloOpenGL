@@ -57,6 +57,10 @@ public:
 
 	inline bool IsFocused() const { return m_Focused; }
 
+	inline int GetWidth() const { return m_Width; }
+
+	inline int GetHeight() const { return m_Height; }
+
 private:
 
 	void FramebufferSizeCallback(GLFWwindow* window, int width, int height);

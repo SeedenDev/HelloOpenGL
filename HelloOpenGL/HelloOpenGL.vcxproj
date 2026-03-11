@@ -509,6 +509,8 @@
     <ClInclude Include="src\Rendering\VertexLayout.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\basic2DQuad.frag" />
+    <None Include="assets\shaders\basic2DQuad.vert" />
     <None Include="assets\shaders\basicLighting.frag" />
     <None Include="assets\shaders\basicLighting.vert" />
     <None Include="assets\shaders\doubleTexture.frag" />

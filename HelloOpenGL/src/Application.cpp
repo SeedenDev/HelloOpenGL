@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
@@ -33,6 +34,9 @@
 
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
+#define SCENE_CUBE
+//#define USING_FB
+
 int main(void)
 {
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
@@ -40,6 +44,7 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     //TODO: everything below in a Renderer class or smth like that
+    glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -83,16 +88,18 @@ int main(void)
     basicLightingShader.Unbind();*/
 
     // Model loading tests
+#ifndef SCENE_CUBE
     //Model customModel("assets/models/columbina/columbina.obj", 0);
     //Model customModel("assets/models/backpack/backpack.obj", 1);
     Model customModel("assets/models/sponza-glTF/Sponza.gltf", 1);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
+#endif
 
     // Scene part
     Camera camera(appWindow.GetWindowPointer(), appWindow.GetAspectRatio());
 
-    //TODO: add again the possibility of having 2D draw on screen like HUD
+    //TODO: add again the possibility of having 2D draw on screen like HUD => the 2D shader is baaack (pos/color/uv)
 
     Square square(glm::vec3(0.0f)/*, glm::vec4(0.3f, 0.0f, 0.8f, 1.f)*/);
     square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
@@ -173,6 +180,72 @@ int main(void)
         new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f))
     };
 
+    /* Framebuffer experimentation */
+#ifdef USING_FB
+    unsigned int fb;
+    glGenFramebuffers(1, &fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
+
+    // Create a texture attachement for the color 
+    unsigned int colorTexture;
+    glGenTextures(1, &colorTexture);
+    glActiveTexture(GL_TEXTURE30);
+    glBindTexture(GL_TEXTURE_2D, colorTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, appWindow.GetWidth(), appWindow.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL); // RGB or RGBA maybe RGBA8 doesn't work
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+
+    //Note: for depth buffer and stencil buffer it is also possible to set a texture, and even ONE of 32bits for both (24bits depth buffer + 8bits stencil). 
+    // Attachment = GL_DEPTH/STENCIL_ATTACHEMENT ; Component (for glTexImage instead of RGBA8): GL_DEPTH_COMPONENT/GL_STENCIL_INDEX
+    // Or for 2 in 1: glTexImage = GL_DEPTH24_STENCIL8 + GL_DEPTH_STENCIL + GL_UNSIGNED_INT_24_8 
+    //                glFbTexture = GL_DEPTH_STENCIL_ATTACHMENT
+    // Texture: if we want read/write. Renderbuffer if we don't need to read the samples = good for depth/stencil
+
+    // For the depth/stencil then a write-only render buffer object
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, appWindow.GetWidth(), appWindow.GetHeight());
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "You fucked up." << std::endl;
+        throw std::exception::exception("Framebuffer is invalid. Aborting program.");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Don't forget to: glDeleteFramebuffers(fb); at the end of the program (well i'm not doing it rn i'll have an object destructor for that)
+
+    Shader screenShader("assets/shaders/basic2DQuad.vert", "assets/shaders/basic2DQuad.frag");
+    screenShader.Bind();
+    screenShader.SetUniform1i("u_Texture", 30);
+    screenShader.Unbind();
+
+    // Custom screen square because Square implementation doesn't fit the needs
+    const float screenSquareVertices[] = {
+        // pos  // texture
+        -1, -1, 0.0, 0.0, // 0 (bottom-left)
+         1, -1, 1.0, 0.0, // 1 (bottom-right)
+         1,  1, 1.0, 1.0, // 2 (top-right)
+        -1,  1, 0.0, 1.0  // 3 (top-left)
+    };
+    VertexArray vao;
+    VertexBuffer vbo = VertexBuffer(screenSquareVertices, sizeof(screenSquareVertices));
+    IndexBuffer ibo = IndexBuffer(g_SquareIndices, sizeof(g_SquareIndices));
+
+    VertexLayout attributes;
+    attributes.AddAttr<float>(2);
+    attributes.AddAttr<float>(2);
+    vao.ApplyLayout(vbo, attributes);
+
+    vao.Unbind();
+    vbo.Unbind();
+    ibo.Unbind();
+#endif
+    /* --------------------------- */
+
     glm::vec3 clearColor(0.0f);
     float fogMinDist = 20.0f;
     float fogMaxDist = 100.0f;
@@ -243,8 +316,12 @@ int main(void)
                 doubleTextureShader.Bind();
                 doubleTextureShader.SetUniform1i("u_TextureLower", 0);
                 doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
-                doubleTextureShader.Unbind(); // not really necessary because next call is the same bind
                 basicLightingShader.Reload();
+#ifdef USING_FB
+                screenShader.Reload();
+                screenShader.Bind();
+                screenShader.SetUniform1i("u_Texture", 30);
+#endif
             }
             appWindow.Update();
             camera.Update(deltaTime);
@@ -252,6 +329,13 @@ int main(void)
 
             glm::mat4 view = camera.GetView();
             glm::mat4 projection = camera.GetProj();
+
+            // Framebuffer experimentation
+#ifdef USING_FB
+            glBindFramebuffer(GL_FRAMEBUFFER, fb);
+            glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight());
+#endif
+            // ---
 
             /* Render */
             if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
@@ -388,7 +472,7 @@ int main(void)
             //basicLightingShader.SetUniform1i("u_SpotlightCount", spotlightCount);
 
             //Everything below: very bad because it's not instanced rendering
-#ifndef CUBE
+#ifndef SCENE_CUBE
             model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
             model = glm::scale(model, glm::vec3(0.5f));
@@ -430,7 +514,7 @@ int main(void)
 #endif
             basicLightingShader.Unbind();
             basicUnlitShader.Bind();
-#ifdef CUBE
+#ifdef SCENE_CUBE
             if (enableOutline)
             {
                 glDepthFunc(GL_ALWAYS);
@@ -465,6 +549,18 @@ int main(void)
                 if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
             }
             basicUnlitShader.Unbind();
+
+            // Frame buffer experimentation (not including ImGui because it would need some ajustments too)
+#ifdef USING_FB
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST);
+            glClear(GL_COLOR_BUFFER_BIT);
+            screenShader.Bind();
+            vao.Bind();
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            vao.Unbind();
+#endif
+            // ---------
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();

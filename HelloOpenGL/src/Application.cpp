@@ -20,7 +20,7 @@
 #include "Rendering/VertexArray.h"
 #include "Rendering/Texture.h"
 #include "Scene/Camera.h"
-#include "Scene/Square.h"
+#include "Scene/Quad.h"
 #include "Scene/Cube.h"
 #include "Input.h"
 #include "Lights/LightSource.h"
@@ -31,11 +31,12 @@
 #include "Lights/Flashlight.h"
 #include "Lights/GlobalLight.h"
 #include "Rendering/ModelLoader.h"
+#include "Rendering/Framebuffer.h" 
 
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
 #define SCENE_CUBE
-//#define USING_FB
+#define USING_FB
 
 int main(void)
 {
@@ -77,6 +78,10 @@ int main(void)
     doubleTextureShader.SetUniform1i("u_TextureLower", 0);
     doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
     doubleTextureShader.Unbind();
+    Shader screenQuadShader("assets/shaders/basic2DQuad.vert", "assets/shaders/basic2DQuad.frag");
+    basicUnlitShader.Bind();
+    basicUnlitShader.SetUniform1i("u_Texture", 5); // Default is: white texture to use it as a colored quad with u_DynamicColor
+    basicUnlitShader.Unbind();
 
     // Light part
     Shader basicLightingShader("assets/shaders/basicLighting.vert", "assets/shaders/basicLighting.frag");
@@ -101,9 +106,9 @@ int main(void)
 
     //TODO: add again the possibility of having 2D draw on screen like HUD => the 2D shader is baaack (pos/color/uv)
 
-    Square square(glm::vec3(0.0f)/*, glm::vec4(0.3f, 0.0f, 0.8f, 1.f)*/);
-    square.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
-    square.SetScale(glm::vec3(0.5f));
+    Quad quad(glm::vec3(0.0f)/*, glm::vec4(0.3f, 0.0f, 0.8f, 1.f)*/);
+    quad.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
+    quad.SetScale(glm::vec3(0.5f));
 
     std::vector<Cube*> cubes = {
         new Cube(glm::vec3(0.0f,  0.0f,  0.0f)),
@@ -182,67 +187,7 @@ int main(void)
 
     /* Framebuffer experimentation */
 #ifdef USING_FB
-    unsigned int fb;
-    glGenFramebuffers(1, &fb);
-    glBindFramebuffer(GL_FRAMEBUFFER, fb);
-
-    // Create a texture attachement for the color 
-    unsigned int colorTexture;
-    glGenTextures(1, &colorTexture);
-    glActiveTexture(GL_TEXTURE30);
-    glBindTexture(GL_TEXTURE_2D, colorTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, appWindow.GetWidth(), appWindow.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL); // RGB or RGBA maybe RGBA8 doesn't work
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
-
-    //Note: for depth buffer and stencil buffer it is also possible to set a texture, and even ONE of 32bits for both (24bits depth buffer + 8bits stencil). 
-    // Attachment = GL_DEPTH/STENCIL_ATTACHEMENT ; Component (for glTexImage instead of RGBA8): GL_DEPTH_COMPONENT/GL_STENCIL_INDEX
-    // Or for 2 in 1: glTexImage = GL_DEPTH24_STENCIL8 + GL_DEPTH_STENCIL + GL_UNSIGNED_INT_24_8 
-    //                glFbTexture = GL_DEPTH_STENCIL_ATTACHMENT
-    // Texture: if we want read/write. Renderbuffer if we don't need to read the samples = good for depth/stencil
-
-    // For the depth/stencil then a write-only render buffer object
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, appWindow.GetWidth(), appWindow.GetHeight());
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "You fucked up." << std::endl;
-        throw std::exception::exception("Framebuffer is invalid. Aborting program.");
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // Don't forget to: glDeleteFramebuffers(fb); at the end of the program (well i'm not doing it rn i'll have an object destructor for that)
-
-    Shader screenShader("assets/shaders/basic2DQuad.vert", "assets/shaders/basic2DQuad.frag");
-    screenShader.Bind();
-    screenShader.SetUniform1i("u_Texture", 30);
-    screenShader.Unbind();
-
-    // Custom screen square because Square implementation doesn't fit the needs
-    const float screenSquareVertices[] = {
-        // pos  // texture
-        -1, -1, 0.0, 0.0, // 0 (bottom-left)
-         1, -1, 1.0, 0.0, // 1 (bottom-right)
-         1,  1, 1.0, 1.0, // 2 (top-right)
-        -1,  1, 0.0, 1.0  // 3 (top-left)
-    };
-    VertexArray vao;
-    VertexBuffer vbo = VertexBuffer(screenSquareVertices, sizeof(screenSquareVertices));
-    IndexBuffer ibo = IndexBuffer(g_SquareIndices, sizeof(g_SquareIndices));
-
-    VertexLayout attributes;
-    attributes.AddAttr<float>(2);
-    attributes.AddAttr<float>(2);
-    vao.ApplyLayout(vbo, attributes);
-
-    vao.Unbind();
-    vbo.Unbind();
-    ibo.Unbind();
+    Framebuffer fullscreenFb(appWindow.GetWidth(), appWindow.GetHeight());
 #endif
     /* --------------------------- */
 
@@ -317,11 +262,7 @@ int main(void)
                 doubleTextureShader.SetUniform1i("u_TextureLower", 0);
                 doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
                 basicLightingShader.Reload();
-#ifdef USING_FB
-                screenShader.Reload();
-                screenShader.Bind();
-                screenShader.SetUniform1i("u_Texture", 30);
-#endif
+                screenQuadShader.Reload();
             }
             appWindow.Update();
             camera.Update(deltaTime);
@@ -332,8 +273,8 @@ int main(void)
 
             // Framebuffer experimentation
 #ifdef USING_FB
-            glBindFramebuffer(GL_FRAMEBUFFER, fb);
-            glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight());
+            fullscreenFb.Resize(appWindow.GetWidth(), appWindow.GetHeight()); //TODO: not resize every frame but on event
+            fullscreenFb.Bind();
 #endif
             // ---
 
@@ -359,14 +300,14 @@ int main(void)
             doubleTextureShader.SetUniform1f("u_Time", currentTime);
 
             // My eyes are bleeding with all of these duplicated lines but it'll be changed soon (it's just the Cube/Square implementation should be rewritten it's bad but idc for now)
-            glm::mat4 model = square.GetModelMatrix();
+            glm::mat4 model = quad.GetModelMatrix();
             glm::mat4 MVP = projection * view * model;
             doubleTextureShader.SetUniformMat4f("u_View", view);
             doubleTextureShader.SetUniformMat4f("u_Projection", projection);
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
-            doubleTextureShader.SetUniformVec4f("u_DynamicColor", square.GetColor());
-            //square.Draw();
+            doubleTextureShader.SetUniformVec4f("u_DynamicColor", quad.GetColor());
+            //quad.Draw();
             doubleTextureShader.Unbind();
 
             basicLightingShader.Bind();
@@ -552,13 +493,9 @@ int main(void)
 
             // Frame buffer experimentation (not including ImGui because it would need some ajustments too)
 #ifdef USING_FB
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glDisable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT);
-            screenShader.Bind();
-            vao.Bind();
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            vao.Unbind();
+            fullscreenFb.Unbind();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // The target fb where we want to draw
+            fullscreenFb.Draw(screenQuadShader);
 #endif
             // ---------
 

@@ -1,6 +1,6 @@
-#include "Square.h"
+#include "Quad.h"
 
-Square::Square(glm::vec3 position, glm::vec4 color)
+Quad::Quad(glm::vec3 position, glm::vec4 color)
     : m_Color(color)
 {
     m_Transform.position = position;
@@ -22,11 +22,11 @@ Square::Square(glm::vec3 position, glm::vec4 color)
     UpdateModelMatrix();
 }
 
-Square::~Square()
+Quad::~Quad()
 {
 }
 
-void Square::Draw() const
+void Quad::Draw() const
 {
     m_Vao.Bind();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

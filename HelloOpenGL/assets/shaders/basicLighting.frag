@@ -121,7 +121,7 @@ void main()
     float viewDist = length(viewDir);
     viewDir = normalize(viewDir);
 
-    vec4 resultColor = vec4(0);
+    vec4 resultColor = vec4(0, 0, 0, materialAmbientColor.a);
 
     //TODO: ambient should not be additive. Objects should have an lighting ambient value.
     for(int i = 0; i < u_LightCount; i++)

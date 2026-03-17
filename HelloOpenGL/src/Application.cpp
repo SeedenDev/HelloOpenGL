@@ -35,7 +35,7 @@
 
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
-#define SCENE_CUBE
+//#define SCENE_CUBE
 #define USING_FB
 
 int main(void)

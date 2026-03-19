@@ -11,6 +11,7 @@ const float kernelOffset = 1.0 / 300.0;
 
 void main()
 {
+//TODO: a way to enable them with imgui
 	vec4 preprocessColor = u_DynamicColor * texture(u_Texture, vertexTex);
 	// Various effects (from learnopengl.com)
 	vec4 inverseColor = vec4(1) - preprocessColor;
@@ -29,21 +30,39 @@ void main()
         vec2( 0.0f,   -kernelOffset), // bottom-center
         vec2( kernelOffset, -kernelOffset)  // bottom-right    
     );
-    // Sharpen
-    float kernel[9] = float[](
+    float sharpenKernel[9] = float[](
         -1, -1, -1,
         -1,  9, -1,
         -1, -1, -1
     );
-    //TODO: blur kernel and edge detection
+    float blurKernel[9] = float[](
+        1.0 / 16, 2.0 / 16, 1.0 / 16,
+        2.0 / 16, 4.0 / 16, 2.0 / 16,
+        1.0 / 16, 2.0 / 16, 1.0 / 16  
+    );
+    float blurKernelNotOne[9] = float[](
+        1.0, 2.0, 1.0,
+        2.0, 4.0, 2.0,
+        1.0, 2.0, 1.0
+    );
+    float edgeDetectionKernel[9] = float[](
+        1,  1, 1,
+        1, -8, 1,
+        1,  1, 1
+    );
+    float customKernelTest[9] = float[](
+        0, 0, -1,
+        0, 0, 1,
+        0, 0, 1
+    );
     vec3 sampleColor[9];
     for(int i = 0; i < 9; i++) sampleColor[i] = vec3(texture(u_Texture, vertexTex.st + offsets[i]));
 
+    float kernel[9] = blurKernel;
     vec3 postKernelColor = vec3(0.0);
     for(int i = 0; i < 9; i++) postKernelColor += sampleColor[i] * kernel[i];
 
-
 	vec4 postprocessColor = vec4(postKernelColor, 1);
 	postprocessColor.a = preprocessColor.a;
-	outColor = postprocessColor;
+	outColor = preprocessColor;
 }

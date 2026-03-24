@@ -1,8 +1,7 @@
 #include "Framebuffer.h"
 
 //TODO: make MSAA work
-
-//TODO: add a "render resolution", like the 0.9, 1.3 in games or just setting a resolution "WxH". and then it is resized to the real window size when drawing on main FB 
+//TODO: add a "render resolution" and "resolution scale" in game settings (like WxH & 0.9/1.3 stuff)
 
 Framebuffer::Framebuffer(int width, int height)
     : m_Width(width), m_Height(height)
@@ -64,6 +63,7 @@ Framebuffer::~Framebuffer()
 void Framebuffer::Bind()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_Fb);
+    glViewport(0, 0, m_Width, m_Height);
 }
 
 void Framebuffer::Unbind()

@@ -187,7 +187,8 @@ int main(void)
 
     /* Framebuffer experimentation */
 #ifdef USING_FB
-    Framebuffer fullscreenFb(3840, 2160); // size like in the game settings
+    float renderScale = 1.0f; // also add a render size in game settings (like WxH)
+    Framebuffer fullscreenFb(appWindow.GetWidth()*renderScale, appWindow.GetHeight()*renderScale);
 #endif
     /* --------------------------- */
 
@@ -273,7 +274,7 @@ int main(void)
 
             // Framebuffer experimentation
 #ifdef USING_FB
-            fullscreenFb.Resize(appWindow.GetWidth(), appWindow.GetHeight()); //TODO: not resize every frame but on event
+            //fullscreenFb.Resize(appWindow.GetWidth(), appWindow.GetHeight()); //TODO: not resize every frame but on event
             fullscreenFb.Bind();
 #endif
             // ---
@@ -495,6 +496,7 @@ int main(void)
 #ifdef USING_FB
             fullscreenFb.Unbind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0); // The target fb where we want to draw
+            glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight());
             fullscreenFb.Draw(screenQuadShader);
 #endif
             // ---------

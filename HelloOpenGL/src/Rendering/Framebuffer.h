@@ -30,7 +30,7 @@ public:
 	void Bind(); 
 	void Unbind();
 	void Draw(Shader& shader);//TODO: in real engine, get the proper shader from the ShaderStorage ig? Because this could lead to providing the wrong shader
-	void Resize(int width, int height);
+	void Resize(int width, int height);//Should only be called when resizing the RENDERING framebuffer, not the window.
 
 	const int GetWidth() { return m_Width; }
 	const int GetHeight() { return m_Height; }

@@ -2,6 +2,8 @@
 
 //TODO: make MSAA work
 
+//TODO: add a "render resolution", like the 0.9, 1.3 in games or just setting a resolution "WxH". and then it is resized to the real window size when drawing on main FB 
+
 Framebuffer::Framebuffer(int width, int height)
     : m_Width(width), m_Height(height)
 {

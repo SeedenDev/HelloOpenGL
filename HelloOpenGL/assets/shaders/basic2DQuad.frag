@@ -11,7 +11,7 @@ const float kernelOffset = 1.0 / 300.0;
 
 void main()
 {
-//TODO: a way to enable them with imgui
+    //TODO: a way to enable them with imgui
 	vec4 preprocessColor = u_DynamicColor * texture(u_Texture, vertexTex);
 	// Various effects (from learnopengl.com)
 	vec4 inverseColor = vec4(1) - preprocessColor;

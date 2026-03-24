@@ -96,7 +96,7 @@ int main(void)
 #ifndef SCENE_CUBE
     //Model customModel("assets/models/columbina/columbina.obj", 0);
     //Model customModel("assets/models/backpack/backpack.obj", 1);
-    Model customModel("assets/models/sponza-glTF/Sponza.gltf", 1);
+    Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
 #endif
@@ -187,7 +187,7 @@ int main(void)
 
     /* Framebuffer experimentation */
 #ifdef USING_FB
-    Framebuffer fullscreenFb(appWindow.GetWidth(), appWindow.GetHeight());
+    Framebuffer fullscreenFb(3840, 2160); // size like in the game settings
 #endif
     /* --------------------------- */
 

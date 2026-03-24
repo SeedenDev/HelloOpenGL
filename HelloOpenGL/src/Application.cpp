@@ -35,6 +35,8 @@
 
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
+//TODO: add a "render resolution" and "resolution scale" in game settings (like WxH & 0.9/1.3 stuff)
+
 //#define SCENE_CUBE
 #define USING_FB
 
@@ -185,12 +187,16 @@ int main(void)
         new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f))
     };
 
-    /* Framebuffer experimentation */
 #ifdef USING_FB
+    int msaaMaxSample;
+    glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &msaaMaxSample);
+    std::cout << "MSAA max samples: " << std::to_string(msaaMaxSample) << std::endl;
+
     float renderScale = 1.0f; // also add a render size in game settings (like WxH)
-    Framebuffer fullscreenFb(appWindow.GetWidth()*renderScale, appWindow.GetHeight()*renderScale);
+    int renderRes[] = { 1920, 1080 };
+    unsigned int msaaSample = std::clamp(16, 0, msaaMaxSample);
+    Framebuffer fullscreenFb(renderRes[0]*renderScale, renderRes[1]*renderScale, msaaSample);
 #endif
-    /* --------------------------- */
 
     glm::vec3 clearColor(0.0f);
     float fogMinDist = 20.0f;
@@ -272,14 +278,12 @@ int main(void)
             glm::mat4 view = camera.GetView();
             glm::mat4 projection = camera.GetProj();
 
-            // Framebuffer experimentation
 #ifdef USING_FB
-            //fullscreenFb.Resize(appWindow.GetWidth(), appWindow.GetHeight()); //TODO: not resize every frame but on event
             fullscreenFb.Bind();
 #endif
-            // ---
 
             /* Render */
+            //TODO: see if it works also for custom MS fb
             if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
             else glDisable(GL_MULTISAMPLE);
 
@@ -495,9 +499,7 @@ int main(void)
             // Frame buffer experimentation (not including ImGui because it would need some ajustments too)
 #ifdef USING_FB
             fullscreenFb.Unbind();
-            glBindFramebuffer(GL_FRAMEBUFFER, 0); // The target fb where we want to draw
-            glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight());
-            fullscreenFb.Draw(screenQuadShader);
+            fullscreenFb.Draw(screenQuadShader, 0, appWindow.GetWidth(), appWindow.GetHeight());
 #endif
             // ---------
 

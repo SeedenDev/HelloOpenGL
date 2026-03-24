@@ -17,20 +17,23 @@ const float g_ScreenQuadVertices[] = {
 class Framebuffer
 {
 private:
-	unsigned int m_Fb, m_ColorTexture, m_Rbo;
+	unsigned int m_Fb, m_ColorTexture, m_Rbo, m_FbMsaa, m_ColorTextureMsaa, m_RboMsaa;
 	VertexArray m_Vao;
 	VertexBuffer m_Vbo = VertexBuffer(g_ScreenQuadVertices, sizeof(g_ScreenQuadVertices));
 	IndexBuffer m_Ibo = IndexBuffer(g_QuadIndices, sizeof(g_QuadIndices));
 	int m_Width, m_Height;
+	unsigned int m_MsaaSample;
 
 public:
-	Framebuffer(int width, int height);
+	Framebuffer(int width, int height, unsigned int msaaSample=0);
 	~Framebuffer();
 
 	void Bind(); 
 	void Unbind();
-	void Draw(Shader& shader);//TODO: in real engine, get the proper shader from the ShaderStorage ig? Because this could lead to providing the wrong shader
-	void Resize(int width, int height);//Should only be called when resizing the RENDERING framebuffer, not the window.
+	//TODO: in real engine, get the proper shader from the ShaderStorage ig? Because this could lead to providing the wrong shader
+	// Same for destination fb it is stored somewhere
+	void Draw(Shader& shader, unsigned int drawFb, int fbWidth, int fbHeight);
+	void Resize(int width, int height);//Should only be called when resizing the RENDERING framebuffer, not the window. (e.g. render height/scale)
 
 	const int GetWidth() { return m_Width; }
 	const int GetHeight() { return m_Height; }

@@ -23,7 +23,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-    glfwWindowHint(GLFW_SAMPLES, 16); // MSAA
+    glfwWindowHint(GLFW_SAMPLES, 16); // MSAA sample count for default window framebuffer
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);

@@ -1,10 +1,7 @@
 #include "Framebuffer.h"
 
-//TODO: make MSAA work
-//TODO: add a "render resolution" and "resolution scale" in game settings (like WxH & 0.9/1.3 stuff)
-
-Framebuffer::Framebuffer(int width, int height)
-    : m_Width(width), m_Height(height)
+Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
+    : m_Width(width), m_Height(height), m_MsaaSample(msaaSample)
 {
     m_Vao.Bind();
     m_Vbo.Bind();
@@ -19,7 +16,7 @@ Framebuffer::Framebuffer(int width, int height)
     m_Vbo.Unbind();
     m_Ibo.Unbind();
 
-    // GL framebuffer setup
+    // GL framebuffer setup (render-to-texture fb)
     glGenFramebuffers(1, &m_Fb);
     glBindFramebuffer(GL_FRAMEBUFFER, m_Fb);
 
@@ -48,7 +45,35 @@ Framebuffer::Framebuffer(int width, int height)
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "You fucked up." << std::endl;
-        throw std::exception::exception("Framebuffer is invalid. Aborting program.");
+        throw std::exception::exception("Render to Texture Framebuffer is invalid. Aborting program.");
+    }
+    // Multisampled fb
+    if (msaaSample > 0)
+    {
+        glGenFramebuffers(1, &m_FbMsaa);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FbMsaa);
+
+        // Create a texture attachement for the color 
+        glGenTextures(1, &m_ColorTextureMsaa);
+        glActiveTexture(GL_TEXTURE31);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_ColorTextureMsaa);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSample, GL_RGBA8, m_Width, m_Height, GL_TRUE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_ColorTextureMsaa, 0);
+
+        // For the depth/stencil then a write-only render buffer object
+        glGenRenderbuffers(1, &m_RboMsaa);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_RboMsaa);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSample, GL_DEPTH24_STENCIL8, m_Width, m_Height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RboMsaa);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "You fucked up." << std::endl;
+            throw std::exception::exception("Multisampled Framebuffer is invalid. Aborting program.");
+        }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -58,11 +83,17 @@ Framebuffer::~Framebuffer()
     glDeleteTextures(1, &m_ColorTexture);
     glDeleteRenderbuffers(1, &m_Rbo);
     glDeleteFramebuffers(1, &m_Fb);
+    if (m_MsaaSample > 0)
+    {
+        glDeleteTextures(1, &m_ColorTextureMsaa);
+        glDeleteRenderbuffers(1, &m_RboMsaa);
+        glDeleteFramebuffers(1, &m_FbMsaa);
+    }
 }
 
 void Framebuffer::Bind()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_Fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_MsaaSample==0 ? m_Fb : m_FbMsaa);
     glViewport(0, 0, m_Width, m_Height);
 }
 
@@ -71,9 +102,16 @@ void Framebuffer::Unbind()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-//Note: don't forget to bind the framebuffer where we want to draw beforehand calling this
-void Framebuffer::Draw(Shader& shader)
+void Framebuffer::Draw(Shader& shader, unsigned int drawFb, int fbWidth, int fbHeight)
 {
+    if (m_MsaaSample > 0)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FbMsaa);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Fb);
+        glBlitFramebuffer(0, 0, m_Width, m_Height, 0, 0, m_Width, m_Height, GL_COLOR_BUFFER_BIT, GL_LINEAR); // or GL_NEAREST
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, drawFb);
+    glViewport(0, 0, fbWidth, fbHeight);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
     shader.Bind();
@@ -98,7 +136,14 @@ void Framebuffer::Resize(int width, int height)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_Width, m_Height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    Bind();
-    glViewport(0, 0, width, height);
-    Unbind();
+    if (m_MsaaSample > 0)
+    {
+        glActiveTexture(GL_TEXTURE31);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_ColorTextureMsaa);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_MsaaSample, GL_RGBA8, m_Width, m_Height, GL_TRUE);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, m_RboMsaa);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_MsaaSample, GL_DEPTH24_STENCIL8, m_Width, m_Height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 }

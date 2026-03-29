@@ -44,7 +44,6 @@ Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_Rbo);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "You fucked up." << std::endl;
         throw std::exception::exception("Render to Texture Framebuffer is invalid. Aborting program.");
     }
     // Multisampled fb
@@ -71,7 +70,6 @@ Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RboMsaa);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            std::cerr << "You fucked up." << std::endl;
             throw std::exception::exception("Multisampled Framebuffer is invalid. Aborting program.");
         }
     }

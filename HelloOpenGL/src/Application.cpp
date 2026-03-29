@@ -36,6 +36,9 @@
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
 //TODO: add a "render resolution" and "resolution scale" in game settings (like WxH & 0.9/1.3 stuff)
+// well maybe not a "render res" but the window size, because the render res is set with the scale or with the AA algorithm (e.g. SMAA x2/x4 the size of the output)
+
+//TODO: surface scaterring: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
 //#define SCENE_CUBE
 #define USING_FB
@@ -163,7 +166,7 @@ int main(void)
     unsigned int lightsSSBO;
     glGenBuffers(1, &lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_DRAW);
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, lightsStack.size() * sizeof(LightStruct), nullptr, GL_DYNAMIC_STORAGE_BIT);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -283,7 +286,7 @@ int main(void)
 #endif
 
             /* Render */
-            //TODO: see if it works also for custom MS fb
+            //TODO: see if it works also for custom MS fb (seems to but still when disabled it is better than 0 sample, perhaps because it is still using a MS fb?)
             if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
             else glDisable(GL_MULTISAMPLE);
 
@@ -407,7 +410,7 @@ int main(void)
             if (lightsData.size() > 0)
             {
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, lightsData.size() * sizeof(LightStruct), &lightsData[0], GL_STREAM_DRAW);
+                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, lightsData.size() * sizeof(LightStruct), &lightsData[0]);
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
             }
             lightsData.clear();

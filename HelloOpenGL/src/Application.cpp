@@ -189,6 +189,92 @@ int main(void)
 
         new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f))
     };
+    
+    /* Cubemap tests */
+    const std::string skyboxAssetsPath = "assets/textures/skybox/";
+    unsigned int skyboxTexture;
+    glGenTextures(1, &skyboxTexture);
+    glActiveTexture(GL_TEXTURE25);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+    int width, height, bytesPerChannel;
+    unsigned char* data;
+    stbi_set_flip_vertically_on_load(0);
+    for (int i = 0; i < 6; i++)
+    {
+        data = stbi_load((skyboxAssetsPath + std::to_string(i) + std::string(".jpg")).c_str(), &width, &height, &bytesPerChannel, 0);
+        if (data)
+        {
+            //Note: neg_z = front / make it that way in the files
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else {
+            std::cerr << "Skybox texture " << std::to_string(i) << " couldn't be loaded." << std::endl;
+            glDeleteTextures(1, &skyboxTexture);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    // Don't forget to delete the texture once it'll be implemented as a class
+
+    //TODO: I'm dying seeing this, I need to clean it with a IBO in the future
+    float skyboxVertices[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
+    };
+    VertexArray skyboxVao;
+    VertexBuffer skyboxVbo(skyboxVertices, sizeof(skyboxVertices));
+    VertexLayout skyboxLayout;
+    skyboxLayout.AddAttr<float>(3);
+    skyboxVao.ApplyLayout(skyboxVbo, skyboxLayout);
+    skyboxVao.Unbind();
+    skyboxVbo.Unbind();
+
+    Shader skyboxShader("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+    /* ------------- */
 
 #ifdef USING_FB
     int msaaMaxSample;
@@ -273,6 +359,7 @@ int main(void)
                 doubleTextureShader.SetUniform1i("u_TextureUpper", 1);
                 basicLightingShader.Reload();
                 screenQuadShader.Reload();
+                skyboxShader.Reload();
             }
             appWindow.Update();
             camera.Update(deltaTime);
@@ -284,11 +371,12 @@ int main(void)
 #ifdef USING_FB
             fullscreenFb.Bind();
 #endif
-
             /* Render */
             //TODO: see if it works also for custom MS fb (seems to but still when disabled it is better than 0 sample, perhaps because it is still using a MS fb?)
             if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
             else glDisable(GL_MULTISAMPLE);
+
+            //Note: glCullFace needs to be disabled for objects like 2D grass
 
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_STENCIL_TEST);
@@ -498,6 +586,16 @@ int main(void)
                 if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
             }
             basicUnlitShader.Unbind();
+
+            glDepthFunc(GL_LEQUAL); //default GL_LESS
+            skyboxShader.Bind();
+            skyboxShader.SetUniformMat4f("u_View", glm::mat4(glm::mat3(view)));
+            skyboxShader.SetUniformMat4f("u_Projection", projection);
+            skyboxShader.SetUniform1i("u_Skybox", 25);
+            skyboxVao.Bind();
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            skyboxShader.Unbind();
+            glDepthFunc(GL_LESS);
 
             // Frame buffer experimentation (not including ImGui because it would need some ajustments too)
 #ifdef USING_FB

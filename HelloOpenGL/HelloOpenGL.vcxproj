@@ -518,6 +518,8 @@
     <None Include="assets\shaders\doubleTexture.frag" />
     <None Include="assets\shaders\basicUnlit.vert" />
     <None Include="assets\shaders\basicUnlit.frag" />
+    <None Include="assets\shaders\skybox.frag" />
+    <None Include="assets\shaders\skybox.vert" />
     <None Include="vendors\glm\detail\func_common.inl" />
     <None Include="vendors\glm\detail\func_common_simd.inl" />
     <None Include="vendors\glm\detail\func_exponential.inl" />

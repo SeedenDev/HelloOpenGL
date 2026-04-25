@@ -40,7 +40,7 @@
 
 //TODO: surface scaterring: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
-//#define SCENE_CUBE
+#define SCENE_CUBE
 #define USING_FB
 
 int main(void)
@@ -100,7 +100,7 @@ int main(void)
     // Model loading tests
 #ifndef SCENE_CUBE
     //Model customModel("assets/models/columbina/columbina.obj", 0);
-    //Model customModel("assets/models/backpack/backpack.obj", 1);
+    Model backpackModel("assets/models/backpack/backpack.obj", 1);
     Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
@@ -518,6 +518,15 @@ int main(void)
             basicLightingShader.SetUniformMat4f("u_Model", model);
             basicLightingShader.SetUniformMat4f("u_MVP", MVP);
             customModel.Draw(basicLightingShader);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(0.1f));
+            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            MVP = projection * view * model;
+            basicLightingShader.SetUniformMat4f("u_Model", model);
+            basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+            backpackModel.Draw(basicLightingShader);
 #else
             // everything set by hand because Material can't really retrieve a texture because for now the system
             // is tied to the Model loader and not to an asset system

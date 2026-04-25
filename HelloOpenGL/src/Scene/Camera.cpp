@@ -93,7 +93,7 @@ void Camera::Update(double deltaTime)
         if (lShiftPressed) m_Near -= 0.1f;
         else m_Far -= 1.0f;
     }
-    if (m_Near < 0.1f) m_Near = 0.1f;
+    //if (m_Near < 0.1f) m_Near = 0.1f;
     if (m_Near > 10.0f) m_Near = 10.0f;
     if (m_Far < 10.0f) m_Far = 10.0f;
     if (m_Far > 100000.0f) m_Far = 100000.0f;

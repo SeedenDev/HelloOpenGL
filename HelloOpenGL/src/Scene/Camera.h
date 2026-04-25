@@ -14,7 +14,8 @@ private:
 
     float m_HorizontalSpeed = 2.5f, m_VerticalSpeed = 1.5f;
     float m_Sensitivity = 0.1f, m_Yaw = -90.0f, m_Pitch = 0.0f;
-    float m_FOV = 45.0f, m_Near = 0.1f, m_Far = 100.0f;
+    float m_FOV = 45.0f, m_Near = 0.005f, m_Far = 100.0f; 
+    //TODO: with this low near we can now see objects from very close but there is still a problem being: depth buffer with objects a bit far (artefacts)
 
     glm::vec3 m_CamPos, m_CamFront, m_CamRight, m_CamUp;
     glm::mat4 m_ViewMatrix = glm::mat4(1.0f), m_ProjMatrix = glm::mat4(1.0f);

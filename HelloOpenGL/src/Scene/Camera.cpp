@@ -47,8 +47,8 @@ void Camera::Update(double deltaTime)
     m_LastMouseY = mouseY;
 
     if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
-    m_Yaw += offsetX * m_Sensitivity;
-    m_Pitch += offsetY * m_Sensitivity;
+    m_Yaw += offsetX * m_Sensitivity * deltaTime;
+    m_Pitch += offsetY * m_Sensitivity * deltaTime;
 
     if (m_Pitch > 89.0f) m_Pitch = 89.0f;
     if (m_Pitch < -89.0f) m_Pitch = -89.0f;

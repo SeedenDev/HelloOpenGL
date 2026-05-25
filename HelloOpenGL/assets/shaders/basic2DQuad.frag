@@ -56,7 +56,14 @@ void main()
         0, 0, 1
     );
     vec3 sampleColor[9];
-    for(int i = 0; i < 9; i++) sampleColor[i] = vec3(texture(u_Texture, vertexTex.st + offsets[i]));
+    for(int i = 0; i < 9; i++) 
+    {
+        vec2 offset = offsets[i];
+        vec2 texUV = vertexTex.st;
+        if(texUV.s+offset.x >= 0 && texUV.s+offset.x <= 1) texUV.s += offset.x;
+        if(texUV.t+offset.y >= 0 && texUV.t+offset.y <= 1) texUV.t += offset.y;
+        sampleColor[i] = vec3(texture(u_Texture, texUV));
+    }
 
     float kernel[9] = blurKernel;
     vec3 postKernelColor = vec3(0.0);

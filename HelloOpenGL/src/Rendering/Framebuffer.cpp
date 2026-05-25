@@ -1,5 +1,7 @@
 #include "Framebuffer.h"
 
+//TODO: MSAA seems to have a problem on AMD's gpus??? Have to check with default FB & glfw msaa
+
 Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
     : m_Width(width), m_Height(height), m_MsaaSample(msaaSample)
 {
@@ -100,7 +102,7 @@ void Framebuffer::Unbind()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::Draw(Shader& shader, unsigned int drawFb, int fbWidth, int fbHeight)
+void Framebuffer::Draw(Shader& shader, unsigned int destinationFb, int destinationWidth, int destinationHeight)
 {
     if (m_MsaaSample > 0)
     {
@@ -108,8 +110,8 @@ void Framebuffer::Draw(Shader& shader, unsigned int drawFb, int fbWidth, int fbH
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Fb);
         glBlitFramebuffer(0, 0, m_Width, m_Height, 0, 0, m_Width, m_Height, GL_COLOR_BUFFER_BIT, GL_LINEAR); // or GL_NEAREST
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, drawFb);
-    glViewport(0, 0, fbWidth, fbHeight);
+    glBindFramebuffer(GL_FRAMEBUFFER, destinationFb);
+    glViewport(0, 0, destinationWidth, destinationHeight);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
     shader.Bind();
@@ -133,7 +135,12 @@ void Framebuffer::Resize(int width, int height)
     glBindRenderbuffer(GL_RENDERBUFFER, m_Rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_Width, m_Height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    
+    UpdateMsaaFramebufferAttachments();
+}
 
+void Framebuffer::UpdateMsaaFramebufferAttachments()
+{
     if (m_MsaaSample > 0)
     {
         glActiveTexture(GL_TEXTURE31);

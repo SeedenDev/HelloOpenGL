@@ -32,9 +32,16 @@ public:
 	void Unbind();
 	//TODO: in real engine, get the proper shader from the ShaderStorage ig? Because this could lead to providing the wrong shader
 	// Same for destination fb it is stored somewhere
-	void Draw(Shader& shader, unsigned int drawFb, int fbWidth, int fbHeight);
+	void Draw(Shader& shader, unsigned int destinationFb, int destinationWidth, int destinationHeight);
 	void Resize(int width, int height);//Should only be called when resizing the RENDERING framebuffer, not the window. (e.g. render height/scale)
 
+	void SetMsaaLevel(unsigned int msaaSample) { 
+		m_MsaaSample = msaaSample;
+		UpdateMsaaFramebufferAttachments();
+	}
 	const int GetWidth() { return m_Width; }
 	const int GetHeight() { return m_Height; }
+
+private:
+	void UpdateMsaaFramebufferAttachments();
 };

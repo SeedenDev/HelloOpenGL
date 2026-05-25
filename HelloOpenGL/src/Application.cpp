@@ -40,14 +40,22 @@
 
 //TODO: surface scaterring: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
-#define SCENE_CUBE
+//#define SCENE_CUBE
 #define USING_FB
 
 int main(void)
 {
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GPU:" << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "Driver version: " << glGetString(GL_VERSION) << std::endl;
+    int majorVersion, minorVersion;
+    glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
+    glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
+    std::cout << "GL version: " << majorVersion << "." << minorVersion << std::endl;
+    float maxAnisotropy;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
+    std::cout << "Max anisotropy: " << maxAnisotropy << std::endl;
 
     //TODO: everything below in a Renderer class or smth like that
     glEnable(GL_CULL_FACE);
@@ -281,8 +289,9 @@ int main(void)
     glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &msaaMaxSample);
     std::cout << "MSAA max samples: " << std::to_string(msaaMaxSample) << std::endl;
 
+    //Note: not sure about having both of them. I think it's either renderRes either a scale based on the window size?
     float renderScale = 1.0f; // also add a render size in game settings (like WxH)
-    int renderRes[] = { 1920, 1080 };
+    unsigned int renderRes[] = { 1920, 1080 };
     unsigned int msaaSample = std::clamp(16, 0, msaaMaxSample);
     Framebuffer fullscreenFb(renderRes[0]*renderScale, renderRes[1]*renderScale, msaaSample);
 #endif
@@ -306,6 +315,9 @@ int main(void)
     bool unlimitedFPS = 1;
     if (unlimitedFPS || fpsLimit != 60.0)
         appWindow.ToggleVsync(); // Toggle off V-Sync
+
+    // Render resolution for imgui bc it needs int and can't use unsigned int (not good solution lmao)
+    int renderResWidth = renderRes[0], renderResHeight = renderRes[1], msaaLevel = msaaSample;
 
     // Average fps
     int averageFps = 0;
@@ -403,7 +415,7 @@ int main(void)
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", quad.GetColor());
-            //quad.Draw();
+            quad.Draw();
             doubleTextureShader.Unbind();
 
             basicLightingShader.Bind();
@@ -722,6 +734,27 @@ int main(void)
                     }
                 }
                 if (ImGui::ColorEdit3("ClearColor", &clearColor[0])) glClearColor(clearColor.r, clearColor.g, clearColor.b, 1.0f);
+#ifdef USING_FB
+                // Bruh having two variables but i want to bypass the unsigned int stuff for now i'm tired
+                if (ImGui::InputInt("FbWidth", &renderResWidth))
+                {
+                    renderRes[0] = renderResWidth;
+                    fullscreenFb.Resize(renderResWidth*renderScale, renderRes[1]*renderScale);
+                }
+                if (ImGui::InputInt("FbHeight", &renderResHeight))
+                {
+                    renderRes[1] = renderResHeight;
+                    fullscreenFb.Resize(renderRes[0]*renderScale, renderResHeight*renderScale);
+                }
+                if (ImGui::SliderInt("FbMSAALevel", &msaaLevel, 0, msaaMaxSample))
+                {
+                    fullscreenFb.SetMsaaLevel(msaaLevel);
+                }
+                if (ImGui::SliderFloat("FbRenderScale", &renderScale, 0.0f, 10.0f))
+                {
+                    fullscreenFb.Resize(renderRes[0]*renderScale, renderRes[1]*renderScale);
+                }
+#endif
                 ImGui::End();
             }
             ImGui::Render();

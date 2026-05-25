@@ -159,6 +159,7 @@
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ApplicationWindow.cpp" />
     <ClCompile Include="src\Rendering\Framebuffer.cpp" />
+    <ClCompile Include="src\Rendering\VertexLayout.cpp" />
     <ClCompile Include="src\Scene\Camera.cpp" />
     <ClCompile Include="src\Scene\Cube.cpp" />
     <ClCompile Include="src\Lights\DirectionalLight.cpp" />

@@ -26,22 +26,7 @@ private:
 public:
 
 	template<typename T>
-	void AddAttr(GLint count)
-	{
-		static_assert(false);
-	}
-
-	template<>
-	void AddAttr<float>(GLint count)
-	{
-		AddAttribute(GL_FLOAT, count, GL_FALSE);
-	}
-
-	template<>
-	void AddAttr<double>(GLint count)
-	{
-		AddAttribute(GL_DOUBLE, count, GL_FALSE);
-	}
+	void AddAttr(GLint count);
 
 	inline const std::vector<LayoutAttribute>& GetElements() const { return m_Elements; }
 	inline const unsigned int GetStride() const { return m_Stride; }

@@ -41,7 +41,7 @@
 //TODO: surface scaterring: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
 //#define SCENE_CUBE
-#define USING_FB
+//#define USING_FB
 
 int main(void)
 {
@@ -110,7 +110,6 @@ int main(void)
     //Model customModel("assets/models/columbina/columbina.obj", 0);
     Model backpackModel("assets/models/backpack/backpack.obj", 1);
     Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // ----- END OF "should be in a sorta Renderer file" 
 #endif
 
@@ -294,6 +293,9 @@ int main(void)
     unsigned int renderRes[] = { 1920, 1080 };
     unsigned int msaaSample = std::clamp(16, 0, msaaMaxSample);
     Framebuffer fullscreenFb(renderRes[0]*renderScale, renderRes[1]*renderScale, msaaSample);
+
+    // Render resolution for imgui bc it needs int and can't use unsigned int (not good solution lmao)
+    int renderResWidth = renderRes[0], renderResHeight = renderRes[1], msaaLevel = msaaSample;
 #endif
 
     glm::vec3 clearColor(0.0f);
@@ -316,14 +318,13 @@ int main(void)
     if (unlimitedFPS || fpsLimit != 60.0)
         appWindow.ToggleVsync(); // Toggle off V-Sync
 
-    // Render resolution for imgui bc it needs int and can't use unsigned int (not good solution lmao)
-    int renderResWidth = renderRes[0], renderResHeight = renderRes[1], msaaLevel = msaaSample;
-
     // Average fps
     int averageFps = 0;
     const size_t avgBufferSize = 50;
     unsigned int avgBufferPtr = 0;
     float avgBuffer[avgBufferSize] = { 0 };
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!appWindow.ShouldClose())
     {

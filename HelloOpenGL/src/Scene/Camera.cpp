@@ -47,8 +47,8 @@ void Camera::Update(double deltaTime)
     m_LastMouseY = mouseY;
 
     if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
-    m_Yaw += offsetX * m_Sensitivity * deltaTime;
-    m_Pitch += offsetY * m_Sensitivity * deltaTime;
+    m_Yaw += offsetX * m_Sensitivity;
+    m_Pitch += offsetY * m_Sensitivity;
 
     if (m_Pitch > 89.0f) m_Pitch = 89.0f;
     if (m_Pitch < -89.0f) m_Pitch = -89.0f;
@@ -72,13 +72,14 @@ void Camera::Update(double deltaTime)
         camSpeedV *= 2;
     }
     camSpeedH *= deltaTime;
+    camSpeedV *= deltaTime;
 
     if (Input::IsKeyPressed(GLFW_KEY_W)) m_CamPos += camSpeedH * m_CamFront;
     if (Input::IsKeyPressed(GLFW_KEY_S)) m_CamPos -= camSpeedH * m_CamFront;
     if (Input::IsKeyPressed(GLFW_KEY_A)) m_CamPos -= camSpeedH * m_CamRight;
     if (Input::IsKeyPressed(GLFW_KEY_D)) m_CamPos += camSpeedH * m_CamRight;
-    if (Input::IsKeyPressed(GLFW_KEY_SPACE)) m_CamPos.y += camSpeedV * deltaTime;
-    if (Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL)) m_CamPos.y -= camSpeedV * deltaTime;
+    if (Input::IsKeyPressed(GLFW_KEY_SPACE)) m_CamPos.y += camSpeedV;
+    if (Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL)) m_CamPos.y -= camSpeedV;
 
     m_ViewMatrix = glm::lookAt(m_CamPos, m_CamPos + m_CamFront, m_CamUp);
 

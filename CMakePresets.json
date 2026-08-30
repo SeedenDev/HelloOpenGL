@@ -1,0 +1,72 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+    "configurePresets": [
+        {
+            "name": "linux-x64-gcc-ninja",
+            "displayName": "Linux x64 (GCC)",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build/linux-x64-gcc-ninja",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+            "cacheVariables": { "CMAKE_C_COMPILER": "gcc", "CMAKE_CXX_COMPILER": "g++" }
+        },
+        {
+            "name": "linux-x64-clang-ninja",
+            "displayName": "Linux x64 (Clang)",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build/linux-x64-clang-ninja",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+            "cacheVariables": { "CMAKE_C_COMPILER": "clang", "CMAKE_CXX_COMPILER": "clang++" }
+        },
+
+        {
+            "name": "windows-x64-msvc-vs2022",
+            "displayName": "Windows x64 (MSVC, VS 2022)",
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${sourceDir}/build/windows-x64-msvc-vs2022",
+            "condition": {
+                "type": "allOf",
+                "conditions": [
+                    { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+                    { "type": "equals", "lhs": "$env{PROCESSOR_ARCHITECTURE}", "rhs": "AMD64" }
+                ]
+            },
+            "architecture": { "value": "x64" }
+        },
+        {
+            "name": "windows-x64-msvc-vs2026",
+            "displayName": "Windows x64 (MSVC, VS 2026)",
+            "generator": "Visual Studio 18 2026",
+            "binaryDir": "${sourceDir}/build/windows-x64-msvc-vs2026",
+            "condition": {
+                "type": "allOf",
+                "conditions": [
+                    { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+                    { "type": "equals", "lhs": "$env{PROCESSOR_ARCHITECTURE}", "rhs": "AMD64" }
+                ]
+            },
+            "architecture": { "value": "x64" }
+        },
+
+        {
+            "name": "cc-windows-x64-mingw-ninja",
+            "displayName": "Windows x64 CC (MinGW)",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build/mingw-x64-gcc",
+            "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-x64-gcc.cmake",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+        }
+    ],
+    "buildPresets": [
+        { "name": "linux-x64-gcc-ninja-debug","displayName": "Linux x64 (GCC) Debug", "configurePreset": "linux-x64-gcc-ninja", "configuration": "Debug" },
+        { "name": "linux-x64-gcc-ninja-release","displayName": "Linux x64 (GCC) Release", "configurePreset": "linux-x64-gcc-ninja", "configuration": "Release" },
+        { "name": "linux-x64-clang-ninja-debug","displayName": "Linux x64 (CLang) Debug", "configurePreset": "linux-x64-clang-ninja", "configuration": "Debug" },
+        { "name": "linux-x64-clang-ninja-release","displayName": "Linux x64 (CLang) Release", "configurePreset": "linux-x64-clang-ninja", "configuration": "Release" },
+
+        { "name": "windows-x64-msvc-vs2022", "configurePreset": "windows-x64-msvc-vs2022" },
+        { "name": "windows-x64-msvc-vs2026", "configurePreset": "windows-x64-msvc-vs2026" },
+
+        { "name": "cc-windows-x64-mingw-ninja-debug", "displayName": "Windows x64 CC (MinGW) Debug", "configurePreset": "cc-windows-x64-mingw-ninja", "configuration": "Debug" },
+        { "name": "cc-windows-x64-mingw-ninja-release", "displayName": "Windows x64 CC (MinGW) Release", "configurePreset": "cc-windows-x64-mingw-ninja", "configuration": "Release" }
+    ]
+}

@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HelloOpenGL" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="HelloOpenGL" TARGET_NAME="HelloOpenGLExec" CONFIG_NAME="linux-x64-gcc-ninja - linux-x64-gcc-ninja-debug" RUN_TARGET_PROJECT_NAME="HelloOpenGL" RUN_TARGET_NAME="HelloOpenGLExec">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

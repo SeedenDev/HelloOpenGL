@@ -12,7 +12,7 @@ void main()
 {
     vec4 lowerTex = texture(u_TextureLower, vertexTex);
     vec4 upperTex = texture(u_TextureUpper, vertexTex);
-    vec4 texColor = mix(lowerTex, upperTex, 0.5);
+    vec4 texColor = mix(lowerTex, upperTex, 0.3);
     vec4 color = texColor * vertexColor;
     outColor = color;
 }

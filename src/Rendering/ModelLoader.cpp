@@ -1,12 +1,11 @@
 #include "ModelLoader.h"
 
-#include <glad/glad.h>
 #include <iostream>
+#include <chrono>
+
+#include <glad/glad.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
-
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
 
 /* Mesh class */
 Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material)
@@ -64,7 +63,12 @@ Model::Model(const char* filePath, bool flipUVOnLoad)
 	: m_FilePath(filePath), m_FlipUVOnLoad(flipUVOnLoad)
 {
 	m_AssetPath = m_FilePath.substr(0, m_FilePath.find_last_of("/")); //TODO: perhaps a better way exists
-	Load();
+	{ //TODO: remove but i wanna see
+		auto start = std::chrono::high_resolution_clock::now();
+		Load();
+		auto end = std::chrono::high_resolution_clock::now();
+		std::cout << "Time to load: " << std::chrono::duration<double>(end-start).count() << "s" << std::endl;
+	}
 }
 
 Model::~Model()
@@ -101,7 +105,7 @@ void Model::Draw(Shader& shader)
 //private
 void Model::Load()
 {
-	std::cout << "Loading model " << m_AssetPath << std::endl;
+	std::cout << "Loading model " << m_FilePath << std::endl;
 	Assimp::Importer importer;
 	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_EMBEDDED_TEXTURES_LEGACY_NAMING, 1);
 	unsigned int importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
@@ -114,6 +118,7 @@ void Model::Load()
 		return;
 	}
 	m_Meshes.reserve(scene->mNumMeshes);
+	//TODO: just preprocess every material in the scene, cache them, and link them to meshes with ptr or ref, and also count the total number of needed textures through the process
 	m_Textures.reserve(scene->mNumMaterials * 2); // *2 because currently asking for both DIFFUSE & SPECULAR textures (considering only 1 texture per texture type per mesh)
 	m_CachedTextures.reserve(scene->mNumMaterials * 2);
 	if(scene->mNumTextures>0) LoadEmbeddedTextures(scene);
@@ -148,16 +153,21 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 	std::vector<unsigned int> indices;
 	Material material;
 	vertices.reserve(mesh->mNumVertices);
-	indices.reserve(mesh->mNumFaces);
+	indices.reserve(mesh->mNumFaces*3);
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
 		MeshVertex vertex;
-		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f) * nodeTransform;
+								// local position * parent => world pos
+		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.f) * nodeTransform;
+
 		if (mesh->HasNormals()) vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) * glm::mat3(nodeTransform);
+		else vertex.normal = glm::vec3(0.0f);
+
 		//NOTE: what are the other texture coords (layer 1/2/3) for?
 		if (mesh->mTextureCoords[0]) vertex.textureUV = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
 		else vertex.textureUV = { 0.0f, 0.0f };
+
 		vertices.emplace_back(vertex);
 	}
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
@@ -215,7 +225,7 @@ void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 	mat->Get(AI_MATKEY_COLOR_EMISSIVE, color);
 	outMaterial.SetEmissiveColor(glm::vec3(color.r, color.b, color.g));
 
-	mat->Get(AI_MATKEY_SHININESS, value);
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, value)) value = 0.0f;
 	outMaterial.SetSpecularShininess(value);
 
 	if (AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS_STRENGTH, value)) value = 1.0f;

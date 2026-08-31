@@ -102,13 +102,20 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 #set(GLFW_BUILD_WIN32 OFF CACHE BOOL "" FORCE) # idc about win32 support => but needed bc fucking win64 still relies on win32 api.
 
+# trying to make renderdoc work (https://github.com/baldurk/renderdoc/issues/853)
+#set(DEBUG_RENDERDOC OFF)
+#if(DEBUG_RENDERDOC EQUAL ON)
+#    set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+#    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+#endif()
+
 # GLM options
 set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 
 # Assimp options
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-set(ASSIMP_DOUBLE_PRECISION ON CACHE BOOL "" FORCE)
+set(ASSIMP_DOUBLE_PRECISION OFF CACHE BOOL "" FORCE) # must be OFF bc glTF not supported using double-precision
 set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE) # fix for "assimp/code/Common/ZipArchiveIOSystem.cpp:57:14: fatal error: unzip.h: No such file or directory" (https://github.com/assimp/assimp/issues/6542)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE) # disabled (sadly) bc of an error in assimp's code (i WONT touch it): "In member function ‘virtual void Assimp::MS3DImporter::InternReadFile(const std::string&, aiScene*, Assimp::IOSystem*)’: assimp/code/AssetLib/MS3D/MS3DLoader.cpp:633:28: error: variable ‘qu’ set but not used [-Werror=unused-but-set-variable=]"
 

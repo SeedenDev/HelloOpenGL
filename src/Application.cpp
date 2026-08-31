@@ -14,7 +14,6 @@
 #include "ApplicationWindow.h"
 #include "Rendering/Shader.h"
 #include "Rendering/VertexBuffer.h"
-#include "Rendering/IndexBuffer.h"
 #include "Rendering/VertexArray.h"
 #include "Rendering/Texture.h"
 #include "Scene/Camera.h"
@@ -22,7 +21,6 @@
 #include "Scene/Cube.h"
 #include "Input.h"
 #include "Lights/LightSource.h"
-#include "Rendering/Material.h"
 #include "Lights/DirectionalLight.h"
 #include "Lights/PointLight.h"
 #include "Lights/Spotlight.h"
@@ -39,11 +37,10 @@
 
 //TODO: surface scattering: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
-//#define SCENE_CUBE
-//#define USING_FB
-
 int main()
 {
+    const bool SPONZA_MAP = 1, CUSTOM_FB = 1;
+
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
 
     const GLubyte* gpuRenderer = glGetString(GL_RENDERER);
@@ -68,6 +65,7 @@ int main()
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_MULTISAMPLE);
 
     std::string imgData = Curl::GetRemoteImage("https://media.tenor.com/H-5K98Y4FhQAAAAM/cat-buh.gif");
     std::string imgData2 = Curl::GetRemoteImage("https://pbs.twimg.com/media/HBkHsm6bUAAAkXO?format=jpg&name=4096x4096");
@@ -113,12 +111,10 @@ int main()
     basicLightingShader.Unbind();*/
 
     // Model loading tests
-#ifndef SCENE_CUBE
-    //Model customModel("assets/models/columbina/columbina.obj", 0);
+    // Model customModel("assets/models/columbina/columbina.obj", 0);
     Model backpackModel("assets/models/backpack/backpack.obj", 1);
     Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0);
-    // ----- END OF "should be in a sorta Renderer file" 
-#endif
+    // ----- END OF "should be in a sorta Renderer file" (I disagree with my past self)
 
     // Scene part
     Camera camera(appWindow.GetAspectRatio());
@@ -290,16 +286,14 @@ int main()
     Shader skyboxShader("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
     /* ------------- */
 
-#ifdef USING_FB
+    Framebuffer* fullscreenFb = NULL;
     //Note: not sure about having both of them. I think it's either renderRes either a scale based on the window size?
     float renderScale = 1.0f; // also add a render size in game settings (like WxH)
     unsigned int renderRes[] = { 1920, 1080 };
     unsigned int msaaSample = std::clamp(16, 0, msaaMaxSample);
-    Framebuffer fullscreenFb(renderRes[0]*renderScale, renderRes[1]*renderScale, msaaSample);
-
     // Render resolution for imgui bc it needs int and can't use unsigned int (not good solution lmao)
     int renderResWidth = renderRes[0], renderResHeight = renderRes[1], msaaLevel = msaaSample;
-#endif
+    if (CUSTOM_FB) fullscreenFb = new Framebuffer(renderRes[0]*renderScale, renderRes[1]*renderScale, msaaSample); //dirty but idc atm this whole project is dirty code i just need to finish some tutorials and i'm gonna archive this shit to start anew
 
     glm::vec3 clearColor(0.0f);
     float fogMinDist = 20.0f;
@@ -317,7 +311,7 @@ int main()
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
     float fpsLimit = 60.0;
     double deltaTimeLimit = 1.0 / fpsLimit;
-    bool unlimitedFPS = 1;
+    bool unlimitedFPS = 0;
     if (unlimitedFPS || fpsLimit != 60.0)
         appWindow.ToggleVsync(); // Toggle off V-Sync
 
@@ -360,7 +354,7 @@ int main()
             std::string windowTitle =
                 "Hello OpenGL (FPS: " + std::to_string(fps) + " (avg:" + std::to_string(averageFps) + ") - " + std::to_string(msPerFrame) + "ms) DeltaTime:" + std::to_string(deltaTime);
 
-            appWindow.SetTitle(windowTitle);
+            //appWindow.SetTitle(windowTitle);
             lastTime = currentTime;
 
             /* Update */
@@ -384,13 +378,9 @@ int main()
             glm::mat4 view = camera.GetView();
             glm::mat4 projection = camera.GetProj();
 
-#ifdef USING_FB
-            fullscreenFb.Bind();
-#endif
+            if (CUSTOM_FB) fullscreenFb->Bind();
+
             /* Render */
-            //TODO: see if it works also for custom MS fb (seems to but still when disabled it is better than 0 sample, perhaps because it is still using a MS fb?)
-            if (enableMsaa) glEnable(GL_MULTISAMPLE); // Enable MSAA (even if it may already be enabled)
-            else glDisable(GL_MULTISAMPLE);
 
             //Note: glCullFace needs to be disabled for objects like 2D grass
 
@@ -450,59 +440,59 @@ int main()
 
                 switch (light->GetType())
                 {
-                case LightType::GLOBAL:
-                {
-                    GlobalLight* gl = static_cast<GlobalLight*>(light);
-                    uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
-                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
-                    data.position = glm::vec4(static_cast<Common::HasPosition*>(gl)->GetPosition(), 0.0f);
-                    globalLightCount++;
-                }   break;
-                case LightType::DIRECTIONAL:
-                {
-                    DirectionalLight* dl = static_cast<DirectionalLight*>(light);
-                    uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
-                    //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
-                    data.direction = glm::vec4(static_cast<Common::HasDirection*>(dl)->GetDirection(), 0.0f);
-                    directionalLightCount++;
-                }   break;
-                case LightType::POINT:
-                {
-                    PointLight* pl = static_cast<PointLight*>(light);
-                    uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
-                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
-                    //basicLightingShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
-                    //basicLightingShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
-                    //basicLightingShader.SetUniform1f(uniform + ".quadratic", pl->GetQuadratic());
-                    data.position = glm::vec4(static_cast<Common::HasPosition*>(pl)->GetPosition(), 0.0f);
-                    data.constant = pl->GetConstant();
-                    data.linear = pl->GetLinear();
-                    data.quadratic = pl->GetQuadratic();
-                    pointLightCount++;
-                }   break;
-                case LightType::SPOTLIGHT:
-                {
-                    Spotlight* sl = static_cast<Spotlight*>(light);
-                    uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
-                    //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
-                    //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
-                    //basicLightingShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
-                    //basicLightingShader.SetUniform1f(uniform + ".outerCutOff", sl->GetComputedOuterCutOff());
-                    data.position = glm::vec4(static_cast<Common::HasPosition*>(sl)->GetPosition(), 0.0f);
-                    data.direction = glm::vec4(static_cast<Common::HasDirection*>(sl)->GetDirection(), 0.0f);
-                    data.innerCutOff = sl->GetComputedInnerCutOff();
-                    data.outerCutOff = sl->GetComputedOuterCutOff();
-                    spotlightCount++;
-                }   break;
-                case LightType::FLASHLIGHT:
-                {
-                    Flashlight* fl = static_cast<Flashlight*>(light);
-                    data.position = glm::vec4(fl->GetPosition(), 0.0f);
-                    data.direction = glm::vec4(fl->GetDirection(), 0.0f);
-                    data.innerCutOff = fl->GetComputedInnerCutOff();
-                    data.outerCutOff = fl->GetComputedOuterCutOff();
-                    spotlightCount++;
-                }   break;
+                    case LightType::GLOBAL:
+                    {
+                        GlobalLight* gl = static_cast<GlobalLight*>(light);
+                        uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
+                        //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
+                        data.position = glm::vec4(static_cast<Common::HasPosition*>(gl)->GetPosition(), 0.0f);
+                        globalLightCount++;
+                    }   break;
+                    case LightType::DIRECTIONAL:
+                    {
+                        DirectionalLight* dl = static_cast<DirectionalLight*>(light);
+                        uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
+                        //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
+                        data.direction = glm::vec4(static_cast<Common::HasDirection*>(dl)->GetDirection(), 0.0f);
+                        directionalLightCount++;
+                    }   break;
+                    case LightType::POINT:
+                    {
+                        PointLight* pl = static_cast<PointLight*>(light);
+                        uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
+                        //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
+                        //basicLightingShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
+                        //basicLightingShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
+                        //basicLightingShader.SetUniform1f(uniform + ".quadratic", pl->GetQuadratic());
+                        data.position = glm::vec4(static_cast<Common::HasPosition*>(pl)->GetPosition(), 0.0f);
+                        data.constant = pl->GetConstant();
+                        data.linear = pl->GetLinear();
+                        data.quadratic = pl->GetQuadratic();
+                        pointLightCount++;
+                    }   break;
+                    case LightType::SPOTLIGHT:
+                    {
+                        Spotlight* sl = static_cast<Spotlight*>(light);
+                        uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
+                        //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
+                        //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
+                        //basicLightingShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
+                        //basicLightingShader.SetUniform1f(uniform + ".outerCutOff", sl->GetComputedOuterCutOff());
+                        data.position = glm::vec4(static_cast<Common::HasPosition*>(sl)->GetPosition(), 0.0f);
+                        data.direction = glm::vec4(static_cast<Common::HasDirection*>(sl)->GetDirection(), 0.0f);
+                        data.innerCutOff = sl->GetComputedInnerCutOff();
+                        data.outerCutOff = sl->GetComputedOuterCutOff();
+                        spotlightCount++;
+                    }   break;
+                    case LightType::FLASHLIGHT:
+                    {
+                        Flashlight* fl = static_cast<Flashlight*>(light);
+                        data.position = glm::vec4(fl->GetPosition(), 0.0f);
+                        data.direction = glm::vec4(fl->GetDirection(), 0.0f);
+                        data.innerCutOff = fl->GetComputedInnerCutOff();
+                        data.outerCutOff = fl->GetComputedOuterCutOff();
+                        spotlightCount++;
+                    }   break;
                 }
                 //basicLightingShader.SetUniformVec3f(uniform + ".ambient", light->GetAmbientColor());
                 //basicLightingShader.SetUniformVec3f(uniform + ".diffuse", light->GetDiffuseColor());
@@ -525,85 +515,90 @@ int main()
             //basicLightingShader.SetUniform1i("u_SpotlightCount", spotlightCount);
 
             //Everything below: very bad because it's not instanced rendering
-#ifndef SCENE_CUBE
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(0.5f));
-            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            MVP = projection * view * model;
-            basicLightingShader.SetUniformMat4f("u_Model", model);
-            basicLightingShader.SetUniformMat4f("u_MVP", MVP);
-            customModel.Draw(basicLightingShader);
-            
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(0.1f));
-            model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            MVP = projection * view * model;
-            basicLightingShader.SetUniformMat4f("u_Model", model);
-            basicLightingShader.SetUniformMat4f("u_MVP", MVP);
-            backpackModel.Draw(basicLightingShader);
-#else
-            // everything set by hand because Material can't really retrieve a texture because for now the system
-            // is tied to the Model loader and not to an asset system
-            basicLightingShader.SetUniform1i("u_Material.hasDiffuse", 1);
-            basicLightingShader.SetUniform1i("u_Material.hasSpecular", 1);
-            basicLightingShader.SetUniform1i("u_Material.hasEmissive", 1);
-            basicLightingShader.SetUniform1i("u_Material.diffuseMap", 10);
-            basicLightingShader.SetUniform1i("u_Material.specularMap", 11);
-            basicLightingShader.SetUniform1i("u_Material.emissiveMap", 12);
-            basicLightingShader.SetUniform1f("u_Material.shininess", 64.f);
-            basicLightingShader.SetUniform1f("u_Material.specularStrength", 1.0f);
-
-            // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes
-            if (enableOutline)
+            if (SPONZA_MAP)
             {
-                glStencilMask(0xFF);
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-            }
-            for (unsigned int i = 0; i < cubes.size(); i++)
-            {
-                Cube* cube = cubes[i];
-                float angle = 20.0f * i;
-                cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
-                model = cube->GetModelMatrix();
+                model = glm::mat4(1.0f);
+                // model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+                model = glm::scale(model, glm::vec3(1.0f));
+                // model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                 MVP = projection * view * model;
                 basicLightingShader.SetUniformMat4f("u_Model", model);
                 basicLightingShader.SetUniformMat4f("u_MVP", MVP);
-                cube->Draw();
+                customModel.Draw(basicLightingShader);
+
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(0.0f, 3.0f, 0.0f));
+                model = glm::scale(model, glm::vec3(0.1f));
+                // model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                MVP = projection * view * model;
+                basicLightingShader.SetUniformMat4f("u_Model", model);
+                basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+                backpackModel.Draw(basicLightingShader);
             }
-#endif
-            basicLightingShader.Unbind();
-            basicUnlitShader.Bind();
-#ifdef SCENE_CUBE
-            if (enableOutline)
+            else
             {
-                glDepthFunc(GL_ALWAYS);
-                glStencilMask(0x00);
-                glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            
-                basicUnlitShader.SetUniformVec4f("u_DynamicColor", outlineColor);
+                // everything set by hand because Material can't really retrieve a texture because for now the system
+                // is tied to the Model loader and not to an asset system
+                basicLightingShader.SetUniform1i("u_Material.hasDiffuse", 1);
+                basicLightingShader.SetUniform1i("u_Material.hasSpecular", 1);
+                basicLightingShader.SetUniform1i("u_Material.hasEmissive", 1);
+                basicLightingShader.SetUniform1i("u_Material.diffuseMap", 10);
+                basicLightingShader.SetUniform1i("u_Material.specularMap", 11);
+                basicLightingShader.SetUniform1i("u_Material.emissiveMap", 12);
+                basicLightingShader.SetUniform1f("u_Material.shininess", 64.f);
+                basicLightingShader.SetUniform1f("u_Material.specularStrength", 1.0f);
+
+                // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes
+                if (enableOutline)
+                {
+                    glStencilMask(0xFF);
+                    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+                }
                 for (unsigned int i = 0; i < cubes.size(); i++)
                 {
                     Cube* cube = cubes[i];
                     float angle = 20.0f * i;
                     cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                     model = cube->GetModelMatrix();
-                    model = glm::scale(model, glm::vec3(1.1f));
                     MVP = projection * view * model;
-                    basicUnlitShader.SetUniformMat4f("u_Model", model);
-                    basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
+                    basicLightingShader.SetUniformMat4f("u_Model", model);
+                    basicLightingShader.SetUniformMat4f("u_MVP", MVP);
                     cube->Draw();
                 }
-                glDepthFunc(GL_LESS);
-                glStencilMask(0xFF);
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                // Both below not needed but I prefer resetting
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                glClear(GL_STENCIL_BUFFER_BIT);
             }
-#endif
+            basicLightingShader.Unbind();
+            basicUnlitShader.Bind();
+            if (!SPONZA_MAP)
+            {
+                if (enableOutline)
+                {
+                    glDepthFunc(GL_ALWAYS);
+                    glStencilMask(0x00);
+                    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+
+                    basicUnlitShader.SetUniformVec4f("u_DynamicColor", outlineColor);
+                    for (unsigned int i = 0; i < cubes.size(); i++)
+                    {
+                        Cube* cube = cubes[i];
+                        float angle = 20.0f * i;
+                        cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
+                        model = cube->GetModelMatrix();
+                        model = glm::scale(model, glm::vec3(1.1f));
+                        MVP = projection * view * model;
+                        basicUnlitShader.SetUniformMat4f("u_Model", model);
+                        basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
+                        cube->Draw();
+                    }
+                    glDepthFunc(GL_LESS);
+                    glStencilMask(0xFF);
+                    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                    // Both below not needed but I prefer resetting
+                    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                    glClear(GL_STENCIL_BUFFER_BIT);
+                }
+            }
+
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
             for (int i = 0; i < lightsStack.size(); i++)
             {
@@ -622,11 +617,12 @@ int main()
             skyboxShader.Unbind();
             glDepthFunc(GL_LESS);
 
-            // Frame buffer experimentation (not including ImGui because it would need some ajustments too)
-#ifdef USING_FB
-            fullscreenFb.Unbind();
-            fullscreenFb.Draw(screenQuadShader, 0, appWindow.GetWidth(), appWindow.GetHeight());
-#endif
+            // Frame buffer experimentation (not including ImGui because it would need some adjustments too)
+            if (CUSTOM_FB)
+            {
+                fullscreenFb->Unbind();
+                fullscreenFb->Draw(screenQuadShader, 0, appWindow.GetWidth(), appWindow.GetHeight());
+            }
             // ---------
 
             ImGui_ImplOpenGL3_NewFrame();
@@ -639,7 +635,7 @@ int main()
                 ImGui::Text("%.2f;%.2f;%.2f (%.2f;%.2f)", camPos.x, camPos.y, camPos.z, camera.GetYaw(), camera.GetPitch());
                 ImGui::Text("FOV: %.1f", camera.GetFOV());
                 float imguiFps = ImGui::GetIO().Framerate;
-                ImGui::Text("Avg: %.3f ms/frame (%.1f FPS)", 1000.0 / imguiFps, imguiFps);
+                ImGui::Text("Avg: %.3f ms/frame (%.1f FPS)[%.1iFPS/%.1fms]", 1000.0 / imguiFps, imguiFps, averageFps, msPerFrame);
                 ImGui::EndTabBar();
                 ImGui::Begin("Scene editor");
                 ImGui::BeginTabBar("Objects");
@@ -723,7 +719,6 @@ int main()
                 ImGui::Checkbox("Fog", &enableFog);
                 ImGui::SliderFloat("FogMin", &fogMinDist, 0.0f, 1000.0f);
                 ImGui::SliderFloat("FogMax", &fogMaxDist, 0.0f, 1000.0f);
-                ImGui::Checkbox("MSAA", &enableMsaa);
                 ImGui::Combo("Visual debug", &visualDebugMode, visualDebugList, IM_ARRAYSIZE(visualDebugList));
                 ImGui::Checkbox("Cube outline", &enableOutline);
                 if (enableOutline) ImGui::ColorEdit4("Outline", &outlineColor[0]);
@@ -738,27 +733,34 @@ int main()
                     }
                 }
                 if (ImGui::ColorEdit3("ClearColor", &clearColor[0])) glClearColor(clearColor.r, clearColor.g, clearColor.b, 1.0f);
-#ifdef USING_FB
-                // Bruh having two variables but i want to bypass the unsigned int stuff for now i'm tired
-                if (ImGui::InputInt("FbWidth", &renderResWidth))
+                if (CUSTOM_FB)
                 {
-                    renderRes[0] = renderResWidth;
-                    fullscreenFb.Resize(renderResWidth*renderScale, renderRes[1]*renderScale);
+                    // Bruh having two variables but i want to bypass the unsigned int stuff for now i'm tired
+                    if (ImGui::InputInt("FbWidth", &renderResWidth))
+                    {
+                        renderRes[0] = renderResWidth;
+                        fullscreenFb->Resize(renderResWidth*renderScale, renderRes[1]*renderScale);
+                    }
+                    if (ImGui::InputInt("FbHeight", &renderResHeight))
+                    {
+                        renderRes[1] = renderResHeight;
+                        fullscreenFb->Resize(renderRes[0]*renderScale, renderResHeight*renderScale);
+                    }
+                    if (ImGui::Checkbox("MSAA", &enableMsaa))
+                    {
+                        //TODO: idk if it may mess up with ImGui or actually being applied for the framebuffer
+                        if (enableMsaa) glEnable(GL_MULTISAMPLE);
+                        else glDisable(GL_MULTISAMPLE);
+                    }
+                    if (ImGui::SliderInt("FbMSAALevel", &msaaLevel, 0, msaaMaxSample))
+                    {
+                        fullscreenFb->SetMsaaLevel(msaaLevel);
+                    }
+                    if (ImGui::SliderFloat("FbRenderScale", &renderScale, 0.0f, 10.0f))
+                    {
+                        fullscreenFb->Resize(renderRes[0]*renderScale, renderRes[1]*renderScale);
+                    }
                 }
-                if (ImGui::InputInt("FbHeight", &renderResHeight))
-                {
-                    renderRes[1] = renderResHeight;
-                    fullscreenFb.Resize(renderRes[0]*renderScale, renderResHeight*renderScale);
-                }
-                if (ImGui::SliderInt("FbMSAALevel", &msaaLevel, 0, msaaMaxSample))
-                {
-                    fullscreenFb.SetMsaaLevel(msaaLevel);
-                }
-                if (ImGui::SliderFloat("FbRenderScale", &renderScale, 0.0f, 10.0f))
-                {
-                    fullscreenFb.Resize(renderRes[0]*renderScale, renderRes[1]*renderScale);
-                }
-#endif
                 ImGui::End();
             }
             ImGui::Render();

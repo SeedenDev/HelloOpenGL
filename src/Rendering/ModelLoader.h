@@ -11,8 +11,9 @@
 
 struct MeshVertex
 {
-	glm::vec3 position, normal;
+	glm::vec3 position;
 	glm::vec2 textureUV;
+	glm::vec3 normal;
 };
 
 class Mesh

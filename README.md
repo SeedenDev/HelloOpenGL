@@ -12,7 +12,7 @@ WIP
 ## TODOs
 - More rendering stuff, but in the first place finish at least [LearnOpenGL.com](https://learnopengl.com/) tutorials.
 - Optimise models loading (very long atm)
-- Find a better Sponza model
+- Find a better Sponza model (like, proper file names for textures i've seen one like this, perhaps also as a .obj)
 - Confirm Windows native compilation works using VS22
 - Fix cross-compilation Linux -> Windows (libcurl issue)
 - More CMake stuff (cross-compilation to more targets and w/ more options, more Windows setup choices)

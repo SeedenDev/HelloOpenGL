@@ -112,8 +112,9 @@ int main()
 
     // Model loading tests
     // Model customModel("assets/models/columbina/columbina.obj", 0);
-    Model backpackModel("assets/models/backpack/backpack.obj", 1);
-    Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0);
+    Model backpackModel("assets/models/backpack/backpack.obj", 1); // size is insane, x0.1
+    Model customModel("assets/models/sponza-glTF/Sponza.gltf", 0); // x1 size nice
+    // Model customModel("assets/models/sponza/sponza.obj", 0); // size is FREAKING insane, x0.01, and yet length is +5m compared to sponza-glTF x1
     // ----- END OF "should be in a sorta Renderer file" (I disagree with my past self)
 
     // Scene part

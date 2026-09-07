@@ -5,6 +5,7 @@ add_library(imgui)
 file(GLOB_RECURSE IMGUI_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 target_sources(imgui PRIVATE ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(imgui PRIVATE glfw)
 
 #Memo: ImGui's devs recommended to not build it as a static or shared library but rather to directly include the files in the project.
 #Source: https://github.com/ocornut/imgui/wiki/Getting-Started#compilinglinking

@@ -63,8 +63,11 @@
         { "name": "linux-x64-clang-ninja-debug","displayName": "Linux x64 (CLang) Debug", "configurePreset": "linux-x64-clang-ninja", "configuration": "Debug" },
         { "name": "linux-x64-clang-ninja-release","displayName": "Linux x64 (CLang) Release", "configurePreset": "linux-x64-clang-ninja", "configuration": "Release" },
 
-        { "name": "windows-x64-msvc-vs2022", "configurePreset": "windows-x64-msvc-vs2022" },
-        { "name": "windows-x64-msvc-vs2026", "configurePreset": "windows-x64-msvc-vs2026" },
+        { "name": "windows-x64-msvc-vs2022-debug","displayName": "Windows x64 (MSVC-VS22) Debug", "configurePreset": "windows-x64-msvc-vs2022", "configuration": "Debug" },
+        { "name": "windows-x64-msvc-vs2022-release","displayName": "Windows x64 (MSVC-VS22) Release", "configurePreset": "windows-x64-msvc-vs2022", "configuration": "Release" },
+        
+        { "name": "windows-x64-msvc-vs2026-debug","displayName": "Windows x64 (MSVC-VS26) Debug", "configurePreset": "windows-x64-msvc-vs2026", "configuration": "Debug" },
+        { "name": "windows-x64-msvc-vs2026-release","displayName": "Windows x64 (MSVC-VS26) Release", "configurePreset": "windows-x64-msvc-vs2026", "configuration": "Release" },
 
         { "name": "cc-windows-x64-mingw-ninja-debug", "displayName": "Windows x64 CC (MinGW) Debug", "configurePreset": "cc-windows-x64-mingw-ninja", "configuration": "Debug" },
         { "name": "cc-windows-x64-mingw-ninja-release", "displayName": "Windows x64 CC (MinGW) Release", "configurePreset": "cc-windows-x64-mingw-ninja", "configuration": "Release" }

@@ -37,8 +37,15 @@
 
 //TODO: surface scattering: light goes through objects (and can scatter+exits at a diff point) => use for translucent object, like curtains (currently lit on one side), ears, etc
 
+//TODO: missing a curl global init at the very beginning of the program and the global cleanup at the very end of the program
+
+//TODO: remove this, testing purpose only
+#include <filesystem>
+
 int main()
 {
+    std::cout << "Working dir: " << std::filesystem::current_path() << std::endl;
+
     const bool SPONZA_MAP = 1, CUSTOM_FB = 1;
 
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);

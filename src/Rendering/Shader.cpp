@@ -1,5 +1,6 @@
 #include "Shader.h"
 
+#include <filesystem>
 #include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
@@ -82,16 +83,31 @@ void Shader::Unbind() const
 }
 
 // private
-
 std::string Shader::ParseShaderFile(const std::string& filepath)
 {
     // C++ way of reading file, on the basis of how to do it with the C API (could be a little bit quicker)
-    std::ifstream stream(filepath);
-    std::string contents;
+
+    //TODO: refactor with this UTF8 way of opening/accessing files everywhere in the project
+    std::filesystem::path p = std::filesystem::path(std::u8string(filepath.begin(), filepath.end()));
+    
+    std::filesystem::path abs = std::filesystem::absolute(p);
+    std::wcout << L"Shader path: " << abs.wstring() << std::endl;
+
+    std::wstring wpath = p.wstring();    
+    std::ifstream stream(wpath.c_str(), std::ios::binary);
+    //std::ifstream stream(filepath, std::ios::binary);
+    if (!stream) throw std::runtime_error("Failed to open shader file.");
+
     stream.seekg(0, std::ios::end);
-    contents.resize(stream.tellg());
+    std::streampos size = stream.tellg();
+    if (size < 0) throw std::runtime_error("Shader file size is invalid: " + size);
+
+    std::string contents;
+    contents.resize(size);
     stream.seekg(0, std::ios::beg);
-    stream.read(&contents[0], contents.size());
+    stream.read(&contents[0], size);
+    if (!stream) throw std::runtime_error("Failed to read shader file.");
+
     stream.close();
     return contents;
 }

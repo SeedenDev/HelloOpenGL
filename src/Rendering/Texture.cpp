@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <stb/stb_image.h>
 #include <iostream>
+#include <filesystem>
 
 static int i = 0; //TODO: remove or index/identifier in the asset storage (for debug)
 
@@ -49,6 +50,11 @@ void Texture::Unbind() const
 
 void Texture::SetupGLData()
 {
+	if (!m_DataBuffer)
+	{
+		std::cerr << "Failed to load texture " << std::filesystem::absolute(m_TexturePath) << " with stbi: " << stbi_failure_reason() << std::endl;
+		return;
+	}
 	glGenTextures(1, &m_HandlerID);
 	glActiveTexture(GL_TEXTURE0);
 	GLint lastHandle;

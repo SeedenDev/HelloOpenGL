@@ -14,8 +14,8 @@ namespace GLUtil
 		return 0;
 	}
 
-	// From https://learnopengl.com/In-Practice/Debugging
-	static void APIENTRY DebugMessageCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam)
+	// From https://learnopengl.com/In-Practice/Debugging adapted for glad2
+	static void GLAD_API_PTR DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 	{
 		// ignore non-significant error/warning codes
 		if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;

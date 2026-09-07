@@ -20,7 +20,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
         return;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // mandatory on macos, good for windows/linux to be sure i don't call deprecated gl stuff
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
@@ -36,7 +36,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     }
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return;
     }

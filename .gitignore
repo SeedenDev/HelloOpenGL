@@ -1,6 +1,6 @@
 # Cmake
-*bin/
-*build/
+**/bin/
+**/build/
 # CMakePresets.json # no i need it and perhaps the UserPresets too bc i'd need to change the cache vars
 CMakeUserPresets.json
 *cmake_install.cmake

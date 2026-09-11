@@ -46,12 +46,11 @@ int main()
 {
     std::cout << "Working dir: " << std::filesystem::current_path() << std::endl;
 
-    const bool SPONZA_MAP = 1, CUSTOM_FB = 1;
+    const bool SPONZA_MAP = 0, CUSTOM_FB = 1;
 
     ApplicationWindow appWindow("Hello OpenGL", 1080, 720);
 
-    const GLubyte* gpuRenderer = glGetString(GL_RENDERER);
-    std::cout << "GPU: " << gpuRenderer << std::endl;
+    std::cout << "GPU: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "Driver: " << glGetString(GL_VERSION) << std::endl;
     if (GLAD_GL_ARB_bindless_texture != 0) {
         std::cout << "GL_ARB_bindless_texture is available" << std::endl;
@@ -240,13 +239,13 @@ int main()
 
     //TODO: I'm dying seeing this, I need to clean it with a IBO in the future
     float skyboxVertices[] = {
-        // positions          
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
+        // positions
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
 
         -1.0f, -1.0f,  1.0f,
         -1.0f, -1.0f, -1.0f,
@@ -262,12 +261,12 @@ int main()
          1.0f,  1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
 
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
 
         -1.0f,  1.0f, -1.0f,
          1.0f,  1.0f, -1.0f,
@@ -417,7 +416,7 @@ int main()
             doubleTextureShader.SetUniformMat4f("u_Model", model);
             doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", quad.GetColor());
-            quad.Draw();
+            //quad.Draw();
             doubleTextureShader.Unbind();
 
             basicLightingShader.Bind();
@@ -555,6 +554,10 @@ int main()
                 basicLightingShader.SetUniform1i("u_Material.emissiveMap", 12);
                 basicLightingShader.SetUniform1f("u_Material.shininess", 64.f);
                 basicLightingShader.SetUniform1f("u_Material.specularStrength", 1.0f);
+                basicLightingShader.SetUniform1f("u_Material.alpha", 1.0f);//TODO: OIT bc alpha is tied to draw order (don't want to bother to distance-sort every object every tick)
+                basicLightingShader.SetUniform1f("u_Material.reflectivity", 0.3f);//temp value for testing, would need a reflection map to be accurate
+                basicLightingShader.SetUniform1f("u_Material.ior", 1.0f);
+                basicLightingShader.SetUniform1i("u_Envmap", 25);
 
                 // Stencil testing experimentation: object outlining (based on learnopengl.com but edited because disabling depth testing caused issues with the light cubes
                 if (enableOutline)

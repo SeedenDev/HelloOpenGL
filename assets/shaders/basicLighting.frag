@@ -18,6 +18,9 @@ struct Material
     vec3 emissiveColor;
     float shininess; // scattering
     float specularStrength; // scales the specularColor
+    float alpha;
+    float reflectivity;
+    float ior; // index of refraction
     // Eventual textures
     sampler2D diffuseMap; // stores both ambient&diffuse color as the object texture
     sampler2D specularMap; // used for specular sampling
@@ -81,6 +84,28 @@ float GetDepth()
     return LinearizeDepth(gl_FragCoord.z) / far;
 }
 
+// Environmental mapping
+uniform samplerCube u_Envmap;
+vec3 CalcReflectivity()
+{
+    if(u_Material.reflectivity==0.0) return vec3(0);
+    vec3 viewDir = normalize(vertexWorldPos-u_CameraPos);
+    vec3 reflectedRay = reflect(viewDir, normalize(vertexComputedNormal));
+//doesnt look so much like "how much it reflects" but more "how light/dark is the reflection". Ig PBR will fix this "how much it reflects" and "how clear is the reflection"
+    return texture(u_Envmap, reflectedRay).rgb * u_Material.reflectivity;
+}
+//TODO: add refraction for when the light comes out of the object(which means the normal from which it comes out mhm..), atm single-sided refraction (in)
+vec3 CalcRefraction()
+{
+    if(u_Material.ior==1.0) return vec3(0);
+    float srcIOR = 1.0;//air IOR (TODO: from mat to mat refraction, not only air)
+    float destIOR = u_Material.ior;
+    float ratio = srcIOR / destIOR;
+    vec3 viewDir = normalize(vertexWorldPos-u_CameraPos);
+    vec3 refractedRay = refract(viewDir, normalize(vertexComputedNormal), ratio);
+    return texture(u_Envmap, refractedRay).rgb * 0.8;//eventually, a refraction strength bc pure reflection is too dominant over the ambient color
+}
+
 /* Function prototypes */
 // Basic lighting
 vec4 CalcAmbient(vec3 lightAmbient, vec4 materialAmbient);
@@ -106,7 +131,7 @@ void main()
         return;
     }
 
-    vec4 materialDiffuseColor = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex) : vec4(u_Material.diffuseColor, 1);
+    vec4 materialDiffuseColor = u_Material.hasDiffuse ? texture(u_Material.diffuseMap, vertexTex) : vec4(u_Material.diffuseColor, u_Material.alpha);
     if(materialDiffuseColor.a<=0.5) discard; // for sponza scene bruh
     vec4 materialAmbientColor = u_Material.hasDiffuse ? materialDiffuseColor : vec4(u_Material.ambientColor, 1);
     vec4 materialSpecularColor = u_Material.hasSpecular ? texture(u_Material.specularMap, vertexTex) : vec4(u_Material.specularColor, 1);
@@ -115,13 +140,14 @@ void main()
     //TODO: see if emission should really have a mask depending on the specular in any situation or if it just here (thinking about animated textures, seems a great challenge with emission)
     vec4 emissiveMask = step(vec4(1), vec4(1)-materialSpecularColor);
     materialEmissiveColor *= emissiveMask;
+    materialEmissiveColor.a = u_Material.alpha;//fix but maybe temp bc idk if it's right to do it that way
 
     vec3 normal = normalize(vertexComputedNormal);
     vec3 viewDir = u_CameraPos - vertexWorldPos;
     float viewDist = length(viewDir);
     viewDir = normalize(viewDir);
 
-    vec4 resultColor = vec4(0, 0, 0, materialAmbientColor.a);
+    vec4 resultColor = vec4(0, 0, 0, u_Material.alpha);
 
     //TODO: ambient should not be additive. Objects should have an lighting ambient value.
     for(int i = 0; i < u_LightCount; i++)
@@ -140,6 +166,8 @@ void main()
     */
 
     vec4 finalColor = resultColor + materialEmissiveColor;
+    finalColor += vec4(CalcReflectivity(), 1);
+    finalColor += vec4(CalcRefraction(), 1);
 
     // Fog test (to move to a special shader when I know how to combine shaders without having to do 2 draw calls)
     if(u_FogEnabled)

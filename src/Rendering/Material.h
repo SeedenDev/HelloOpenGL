@@ -18,6 +18,9 @@ private:
 	int m_SpecularTexture = -1;
 	int m_EmissiveTexture = -1;
 	//TODO: shininessMap, normal/bumpMap, etc..
+	float m_Alpha = 1.f;
+	float m_Reflectivity = 0.f;
+	float m_IOR = 1.f;
 
 public:
 	Material();
@@ -32,6 +35,9 @@ public:
 	void SetDiffuseTexture(int diffuseTexture) { m_DiffuseTexture = diffuseTexture; }
 	void SetSpecularTexture(int specularTexture) { m_SpecularTexture = specularTexture; }
 	void SetEmissiveTexture(int emissiveTexture) { m_EmissiveTexture = emissiveTexture; }
+	void SetAlpha(float alpha) { m_Alpha = alpha; }
+	void SetReflectivity(float reflectivity) { m_Reflectivity = reflectivity; }
+	void SetIOR(float ior) { m_IOR = ior; }
 
 	inline const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
 	inline const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
@@ -45,6 +51,9 @@ public:
 	inline const bool HasDiffuseTexture() const { return m_DiffuseTexture >= 0; }
 	inline const bool HasSpecularTexture() const { return m_SpecularTexture >= 0; }
 	inline const bool HasEmissiveTexture() const { return m_EmissiveTexture >= 0; }
+	inline const float GetAlpha() const { return m_Alpha; }
+	inline const float GetReflectivity() const { return m_Reflectivity; }
+	inline const float GetIOR() const { return m_IOR; }
 
 	void BindTo(Shader& shader) const;
 

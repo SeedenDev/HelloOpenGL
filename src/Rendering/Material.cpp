@@ -24,4 +24,8 @@ void Material::BindTo(Shader& shader) const
     shader.SetUniform1i("u_Material.hasSpecular", HasSpecularTexture());
     shader.SetUniform1i("u_Material.hasEmissive", HasEmissiveTexture());
     // Warning: no uniform set for texture samplers here (bc we don't know the binding index)
+
+    shader.SetUniform1f("u_Material.alpha", m_Alpha);
+    shader.SetUniform1f("u_Material.reflectivity", m_Reflectivity);
+    shader.SetUniform1f("u_Material.ior", m_IOR);;
 }

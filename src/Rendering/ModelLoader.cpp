@@ -230,6 +230,19 @@ void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 
 	if (AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS_STRENGTH, value)) value = 1.0f;
 	outMaterial.SetSpecularStrength(value);
+
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_OPACITY, value)) value = 1.0f;
+	outMaterial.SetAlpha(value);
+
+	// doesnt seem to be set by gltf2 and objfile importers
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_REFLECTIVITY, value)) value = 0.0f;
+	outMaterial.SetReflectivity(value);
+
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_REFRACTI, value)) value = 1.0f;
+	outMaterial.SetIOR(value);
+
+	// later (0 or not set = enable backface culling (=frontface only), !0 to disable it)
+	// AI_MATKEY_TWOSIDED int
 }
 
 void Model::LoadEmbeddedTextures(const aiScene* scene)

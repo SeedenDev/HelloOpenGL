@@ -9,7 +9,7 @@ uniform mat4 u_Projection;
 
 void main()
 {
-	vec3 mirroredPos = vec3(pos.x, pos.y, -pos.z); // later: better to mirror the Z in the vertices data
+	vec3 mirroredPos = vec3(pos.x, pos.y, pos.z);
 	vertexPos = mirroredPos;
 	gl_Position = (u_Projection * u_View * vec4(pos, 1)).xyww;
 }

@@ -41,7 +41,7 @@ to remove some of them for me currently. Feel free to do your own modifications 
 WIP but simply put for now: CMake (should work on CLion without much trouble as I'm using it).
 
 More CLion info: don't forget to set the WORKING_DIR in your run configuration. An example config file can be found in `cmake/ide-templates/clion/runConfigurations`. You should be able to use the `$ProjectFileDir$` variable to automatically target this root folder.
-
+for this program is lic
 Visual Studio 22 info: I've never tried opening the CMakeLists.txt with the IDE in order to generate the build files so I won't guarantee
 it works this way. Prefer using `cmake --preset windows-x64-msvc-vs2022` (or vs2026, untested) or running `cmake/Setup.bat` and then 
 you can open the .sln file with Visual Studio in the `build` folder.
@@ -55,7 +55,7 @@ you can open the .sln file with Visual Studio in the `build` folder.
 - Assimp 6.0.5 (https://github.com/assimp/assimp)
 - Libcurl 8.21.0 (https://github.com/curl/curl)
 
-## Licence
-WIP
+## Licenses
+The code for this program is licensed under the "Unlicense" license. See `LICENSE.txt` file for more information.
 
-Every third party licence is available in their corresponding vendor subfolders.
+Every third party license is available in their corresponding vendor subfolders.

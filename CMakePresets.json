@@ -60,8 +60,8 @@
     "buildPresets": [
         { "name": "linux-x64-gcc-ninja-debug","displayName": "Linux x64 (GCC) Debug", "configurePreset": "linux-x64-gcc-ninja", "configuration": "Debug" },
         { "name": "linux-x64-gcc-ninja-release","displayName": "Linux x64 (GCC) Release", "configurePreset": "linux-x64-gcc-ninja", "configuration": "Release" },
-        { "name": "linux-x64-clang-ninja-debug","displayName": "Linux x64 (CLang) Debug", "configurePreset": "linux-x64-clang-ninja", "configuration": "Debug" },
-        { "name": "linux-x64-clang-ninja-release","displayName": "Linux x64 (CLang) Release", "configurePreset": "linux-x64-clang-ninja", "configuration": "Release" },
+        { "name": "linux-x64-clang-ninja-debug","displayName": "Linux x64 (Clang) Debug", "configurePreset": "linux-x64-clang-ninja", "configuration": "Debug" },
+        { "name": "linux-x64-clang-ninja-release","displayName": "Linux x64 (Clang) Release", "configurePreset": "linux-x64-clang-ninja", "configuration": "Release" },
 
         { "name": "windows-x64-msvc-vs2022-debug","displayName": "Windows x64 (MSVC-VS22) Debug", "configurePreset": "windows-x64-msvc-vs2022", "configuration": "Debug" },
         { "name": "windows-x64-msvc-vs2022-release","displayName": "Windows x64 (MSVC-VS22) Release", "configurePreset": "windows-x64-msvc-vs2022", "configuration": "Release" },

@@ -57,7 +57,7 @@ if(ENABLE_SIMD_OPTIMISATIONS)
     endif()
 endif()
 
-#TODO: for gcc, test it on the real project to see if there are benefits or bugs. May need to be set to MSVC/CLang only (clang for win/linux/mac)
+#TODO: for gcc, test it on the real project to see if there are benefits or bugs. May need to be set to MSVC/Clang only (clang for win/linux/mac)
 # LTO (link time optimization)
 set_property(TARGET "${EXEC_TARGET_NAME}" PROPERTY INTERPROCEDURAL_OPTIMIZATION_DEBUG FALSE)
 set_property(TARGET "${EXEC_TARGET_NAME}" PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
@@ -93,8 +93,9 @@ endif()
 
 # Remove UNICODE for compile-time Windows shenanigan sometimes turning functions from narrow-style/ANSI (char etc) to wide-style/unicode (wchar_t etc)
 # we can still use the WFunctions if needed but that way it's not random and we can assume the code will run the same on win/linux bc no compile-time guess
-if (WIN32)
-    target_compile_options("${EXEC_TARGET_NAME}" PRIVATE /UUNICODE /U_UNICODE)
+# + at compile-time msvc will view every files as utf8 encoded, needed if for instance there is a Japanese character as a string value in the code itself
+if (MSVC)
+    target_compile_options("${EXEC_TARGET_NAME}" PRIVATE /UUNICODE /U_UNICODE /utf-8)
 endif()
 
 # trying to make renderdoc work (on linux) (https://github.com/baldurk/renderdoc/issues/853)
@@ -118,6 +119,8 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 if(ENABLE_SIMD_OPTIMISATIONS)
     set(GLM_ENABLE_SIMD_AVX2 ON CACHE BOOL "" FORCE)
+else()
+    set(GLM_ENABLE_SIMD_AVX2 OFF CACHE BOOL "" FORCE)
 endif()
 
 # Assimp options

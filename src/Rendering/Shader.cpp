@@ -83,24 +83,20 @@ void Shader::Unbind() const
 }
 
 // private
-std::string Shader::ParseShaderFile(const std::string& filepath)
+std::string Shader::ParseShaderFile(const std::string& stringShaderPath)
 {
     // C++ way of reading file, on the basis of how to do it with the C API (could be a little bit quicker)
+    //TODO: refactor with this UTF8 way of opening/accessing files everywhere in the project (and like i should just ALWAYS use it when i'm handling files)
+    const std::filesystem::path path(std::u8string(stringShaderPath.begin(), stringShaderPath.end()));
+    const std::u8string absolutePath = std::filesystem::absolute(path).u8string();
+    std::cout << "Shader path: " << std::string(absolutePath.begin(), absolutePath.end()) << std::endl;
 
-    //TODO: refactor with this UTF8 way of opening/accessing files everywhere in the project
-    std::filesystem::path p = std::filesystem::path(std::u8string(filepath.begin(), filepath.end()));
-    
-    std::filesystem::path abs = std::filesystem::absolute(p);
-    std::wcout << L"Shader path: " << abs.wstring() << std::endl;
-
-    std::wstring wpath = p.wstring();    
-    std::ifstream stream(wpath.c_str(), std::ios::binary);
-    //std::ifstream stream(filepath, std::ios::binary);
+    std::ifstream stream(path, std::ios::binary);
     if (!stream) throw std::runtime_error("Failed to open shader file.");
 
     stream.seekg(0, std::ios::end);
     std::streampos size = stream.tellg();
-    if (size < 0) throw std::runtime_error("Shader file size is invalid: " + size);
+    if (size < 0) throw std::runtime_error("Shader file size is invalid: " + std::to_string(size));
 
     std::string contents;
     contents.resize(size);

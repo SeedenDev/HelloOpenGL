@@ -36,7 +36,7 @@ public:
     const unsigned int GetHandlerID() const { return m_HandlerID; }
 
 private:
-    std::string ParseShaderFile(const std::string& filepath);
+    std::string ParseShaderFile(const std::string& stringShaderPath);
     unsigned int CreateShader(const GLenum shaderType, const std::string& filepath);
     unsigned int CreateProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 

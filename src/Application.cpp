@@ -44,7 +44,8 @@
 
 int main()
 {
-    std::cout << "Working dir: " << std::filesystem::current_path() << std::endl;
+    const std::u8string workingDir = std::filesystem::current_path().u8string();
+    std::cout << "Working dir: " << std::string(workingDir.begin(), workingDir.end()) << std::endl;
 
     const bool SPONZA_MAP = 0, CUSTOM_FB = 1;
 

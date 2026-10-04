@@ -26,34 +26,34 @@ public:
 	Material();
 	~Material();
 
-	void SetAmbientColor(glm::vec3 ambientColor) { m_AmbientColor = ambientColor; }
-	void SetDiffuseColor(glm::vec3 diffuseColor) { m_DiffuseColor = diffuseColor; }
-	void SetSpecularColor(glm::vec3 specularColor) { m_SpecularColor = specularColor; }
-	void SetEmissiveColor(glm::vec3 emissiveColor) { m_EmissiveColor = emissiveColor; }
-	void SetSpecularShininess(float specularShininess) { m_SpecularShininess = specularShininess; }
-	void SetSpecularStrength(float specularStrength) { m_SpecularStrength = specularStrength; }
-	void SetDiffuseTexture(int diffuseTexture) { m_DiffuseTexture = diffuseTexture; }
-	void SetSpecularTexture(int specularTexture) { m_SpecularTexture = specularTexture; }
-	void SetEmissiveTexture(int emissiveTexture) { m_EmissiveTexture = emissiveTexture; }
-	void SetAlpha(float alpha) { m_Alpha = alpha; }
-	void SetReflectivity(float reflectivity) { m_Reflectivity = reflectivity; }
-	void SetIOR(float ior) { m_IOR = ior; }
+	void SetAmbientColor(const glm::vec3& ambientColor) { m_AmbientColor = ambientColor; }
+	void SetDiffuseColor(const glm::vec3& diffuseColor) { m_DiffuseColor = diffuseColor; }
+	void SetSpecularColor(const glm::vec3& specularColor) { m_SpecularColor = specularColor; }
+	void SetEmissiveColor(const glm::vec3& emissiveColor) { m_EmissiveColor = emissiveColor; }
+	void SetSpecularShininess(const float specularShininess) { m_SpecularShininess = specularShininess; }
+	void SetSpecularStrength(const float specularStrength) { m_SpecularStrength = specularStrength; }
+	void SetDiffuseTexture(const int diffuseTexture) { m_DiffuseTexture = diffuseTexture; }
+	void SetSpecularTexture(const int specularTexture) { m_SpecularTexture = specularTexture; }
+	void SetEmissiveTexture(const int emissiveTexture) { m_EmissiveTexture = emissiveTexture; }
+	void SetAlpha(const float alpha) { m_Alpha = alpha; }
+	void SetReflectivity(const float reflectivity) { m_Reflectivity = reflectivity; }
+	void SetIOR(const float ior) { m_IOR = ior; }
 
-	inline const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
-	inline const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
-	inline const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
-	inline const glm::vec3& GetEmissiveColor() const { return m_EmissiveColor; }
-	inline const float GetSpecularShininess() const { return m_SpecularShininess; }
-	inline const float GetSpecularStrength() const { return m_SpecularStrength; }
-	inline const unsigned int GetDiffuseTexture() const { return m_DiffuseTexture; }
-	inline const unsigned int GetSpecularTexture() const { return m_SpecularTexture; }
-	inline const unsigned int GetEmissiveTexture() const { return m_EmissiveTexture; }
-	inline const bool HasDiffuseTexture() const { return m_DiffuseTexture >= 0; }
-	inline const bool HasSpecularTexture() const { return m_SpecularTexture >= 0; }
-	inline const bool HasEmissiveTexture() const { return m_EmissiveTexture >= 0; }
-	inline const float GetAlpha() const { return m_Alpha; }
-	inline const float GetReflectivity() const { return m_Reflectivity; }
-	inline const float GetIOR() const { return m_IOR; }
+	const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
+	const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
+	const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
+	const glm::vec3& GetEmissiveColor() const { return m_EmissiveColor; }
+	float GetSpecularShininess() const { return m_SpecularShininess; }
+	float GetSpecularStrength() const { return m_SpecularStrength; }
+	unsigned int GetDiffuseTexture() const { return m_DiffuseTexture; }
+	unsigned int GetSpecularTexture() const { return m_SpecularTexture; }
+	unsigned int GetEmissiveTexture() const { return m_EmissiveTexture; }
+	bool HasDiffuseTexture() const { return m_DiffuseTexture >= 0; }
+	bool HasSpecularTexture() const { return m_SpecularTexture >= 0; }
+	bool HasEmissiveTexture() const { return m_EmissiveTexture >= 0; }
+	float GetAlpha() const { return m_Alpha; }
+	float GetReflectivity() const { return m_Reflectivity; }
+	float GetIOR() const { return m_IOR; }
 
 	void BindTo(Shader& shader) const;
 

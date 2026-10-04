@@ -1,7 +1,7 @@
 #include "Spotlight.h"
 
 Spotlight::Spotlight(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor)
-	: m_InnerCutOff(12.5f), m_OuterCutOff(17.5f), LightSource(ambientColor, diffuseColor, specularColor)
+	: LightSource(ambientColor, diffuseColor, specularColor)
 {
 	m_Position = position;
 	m_Direction = direction;

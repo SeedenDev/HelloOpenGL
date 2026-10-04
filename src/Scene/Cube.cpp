@@ -1,6 +1,6 @@
 #include "Cube.h"
 
-Cube::Cube(glm::vec3 position, glm::vec4 color)
+Cube::Cube(const glm::vec3& position, const glm::vec4& color)
     : m_Color(color)
 {
     m_Transform.position = position;
@@ -30,6 +30,6 @@ Cube::~Cube()
 void Cube::Draw() const
 {
     m_Vao.Bind();
-    glDrawElements(GL_TRIANGLES, sizeof(g_CubeIndices), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, sizeof(g_CubeIndices), GL_UNSIGNED_INT, (void*)0);
     m_Vao.Unbind();
 }

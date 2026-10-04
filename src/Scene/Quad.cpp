@@ -1,6 +1,6 @@
 #include "Quad.h"
 
-Quad::Quad(glm::vec3 position, glm::vec4 color)
+Quad::Quad(const glm::vec3& position, const glm::vec4& color)
     : m_Color(color)
 {
     m_Transform.position = position;
@@ -29,6 +29,6 @@ Quad::~Quad()
 void Quad::Draw() const
 {
     m_Vao.Bind();
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
     m_Vao.Unbind();
 }

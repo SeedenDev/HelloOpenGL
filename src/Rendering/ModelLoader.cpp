@@ -8,7 +8,7 @@
 #include <assimp/postprocess.h>
 
 /* Mesh class */
-Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material)
+Mesh::Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, const Material& material)
 	: m_Vertices(std::move(vertices)), m_Indices(std::move(indices)), m_Material(material)
 {
 	SetupGLData();
@@ -22,7 +22,7 @@ Mesh::~Mesh()
 	//std::cout << "mesh destructor" << std::to_string(m_Vao) << "/" << std::to_string(m_Vbo) << "/" << std::to_string(m_Ibo) << "/" << std::endl;
 }
 
-void Mesh::Draw(Shader& shader)
+void Mesh::Draw(Shader& shader) const
 {
 	m_Material.BindTo(shader);
 	glBindVertexArray(m_Vao);
@@ -59,14 +59,14 @@ void Mesh::SetupGLData()
 
 
 /* Model class */
-Model::Model(const char* filePath, bool flipUVOnLoad)
+Model::Model(const char* filePath, const bool flipUVOnLoad)
 	: m_FilePath(filePath), m_FlipUVOnLoad(flipUVOnLoad)
 {
 	m_AssetPath = m_FilePath.substr(0, m_FilePath.find_last_of("/")); //TODO: perhaps a better way exists
 	{ //TODO: remove but i wanna see
-		auto start = std::chrono::high_resolution_clock::now();
+		const auto start = std::chrono::high_resolution_clock::now();
 		Load();
-		auto end = std::chrono::high_resolution_clock::now();
+		const auto end = std::chrono::high_resolution_clock::now();
 		std::cout << "Time to load: " << std::chrono::duration<double>(end-start).count() << "s" << std::endl;
 	}
 }
@@ -78,9 +78,8 @@ Model::~Model()
 
 void Model::Draw(Shader& shader)
 {
-	for (int i = 0; i < m_Meshes.size(); i++)
+	for (Mesh& mesh : m_Meshes)
 	{
-		Mesh& mesh = m_Meshes[i];
 		const Material& mat = mesh.GetMaterial();
 		// Binding textures here to avoid to pass Model object into the Mesh object (waiting for asset system perhaps in a real engine)
 		if (mat.HasDiffuseTexture())
@@ -126,9 +125,9 @@ void Model::Load()
 	m_CachedTextures.clear();
 }
 
-void Model::ProcessNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform)
+void Model::ProcessNode(const aiNode* node, const aiScene* scene, const glm::mat4& parentTransform)
 {
-	aiMatrix4x4 mat = node->mTransformation;
+	const aiMatrix4x4 mat = node->mTransformation;
 	const glm::mat4 nodeTransform = glm::mat4(
 		mat.a1, mat.a2, mat.a3, mat.a4,
 		mat.b1, mat.b2, mat.b3, mat.b4,
@@ -157,7 +156,7 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
-		MeshVertex vertex;
+		MeshVertex vertex{};
 								// local position * parent => world pos
 		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.f) * nodeTransform;
 
@@ -175,20 +174,19 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 		aiFace face = mesh->mFaces[i];
 		for (unsigned int j = 0; j < face.mNumIndices; j++) indices.emplace_back(face.mIndices[j]);
 	}
-	if (mesh->mMaterialIndex >= 0)
-	{
-		aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-		//TODO: smth to cache materials and so in Mesh no material stored, only reference to an existing one (avoid duplicated item+batch rendering of every mesh using the same mat in the future)
-		// => well, jus the matIndex lmao
-		material.SetDiffuseTexture(GetMaterialTextureIndex(mat, aiTextureType_DIFFUSE));
-		material.SetSpecularTexture(GetMaterialTextureIndex(mat, aiTextureType_SPECULAR));
-		material.SetEmissiveTexture(GetMaterialTextureIndex(mat, aiTextureType_EMISSIVE));
-		LoadMaterialProperties(mat, material);
-	}
+
+	aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+	//TODO: smth to cache materials and so in Mesh no material stored, only reference to an existing one (avoid duplicated item+batch rendering of every mesh using the same mat in the future)
+	// => well, jus the matIndex lmao
+	material.SetDiffuseTexture(GetMaterialTextureIndex(mat, aiTextureType_DIFFUSE));
+	material.SetSpecularTexture(GetMaterialTextureIndex(mat, aiTextureType_SPECULAR));
+	material.SetEmissiveTexture(GetMaterialTextureIndex(mat, aiTextureType_EMISSIVE));
+	LoadMaterialProperties(mat, material);
+
 	outMeshes.emplace_back(vertices, indices, material);
 }
 
-int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
+int Model::GetMaterialTextureIndex(const aiMaterial* mat, const aiTextureType type)
 {
 	//std::cout << "Loading texture type " << std::to_string(type) << ": found " << std::to_string(mat->GetTextureCount(type)) << std::endl;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -196,19 +194,19 @@ int Model::GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type)
 		aiString texturePath;
 		mat->GetTexture(type, i, &texturePath);
 		std::string textureAssetPath = m_AssetPath + "/" + texturePath.C_Str();
-		if (auto x = m_CachedTextures.find(textureAssetPath); x != m_CachedTextures.end())
+		if (const auto x = m_CachedTextures.find(textureAssetPath); x != m_CachedTextures.end())
 		{
 			return x->second;
 		}
 		m_Textures.emplace_back(textureAssetPath);
 		m_CachedTextures.emplace(textureAssetPath, m_Textures.size() - 1); // in multithreaded content should have an atomic integer GetNextIndex() or smth like that ig
 		//std::cout << "External texture loaded: " << textureAssetPath << std::endl;
-		return m_Textures.size() - 1;
+		return m_Textures.size()-1;
 	}
 	return -1;
 }
 
-void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
+void Model::LoadMaterialProperties(const aiMaterial* mat, Material& outMaterial)
 {
 	aiColor3D color(0.f, 0.f, 0.f);
 	float value = 0.0f;
@@ -234,7 +232,7 @@ void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 	if (AI_SUCCESS != mat->Get(AI_MATKEY_OPACITY, value)) value = 1.0f;
 	outMaterial.SetAlpha(value);
 
-	// doesnt seem to be set by gltf2 and objfile importers
+	// doesnt seem to be set by gltf2 and obj file importers
 	if (AI_SUCCESS != mat->Get(AI_MATKEY_REFLECTIVITY, value)) value = 0.0f;
 	outMaterial.SetReflectivity(value);
 
@@ -247,11 +245,11 @@ void Model::LoadMaterialProperties(aiMaterial* mat, Material& outMaterial)
 
 void Model::LoadEmbeddedTextures(const aiScene* scene)
 {
-	for (int i = 0; i < scene->mNumTextures; i++)
+	for (unsigned int i = 0; i < scene->mNumTextures; i++)
 	{
-		aiTexture* texture = scene->mTextures[i];
+		const aiTexture* texture = scene->mTextures[i];
 
-		unsigned char* textureData = reinterpret_cast<unsigned char*>(texture->pcData);
+		const unsigned char* textureData = reinterpret_cast<unsigned char*>(texture->pcData);
 		int texSize = texture->mHeight == 0 ? texture->mWidth : texture->mWidth * texture->mHeight;
 
 		m_Textures.emplace_back(textureData, texSize);

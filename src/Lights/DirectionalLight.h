@@ -9,12 +9,13 @@ private:
 public:
 	DirectionalLight(const glm::vec3& direction, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	void OnDirectionUpdate(const glm::vec3& direction) override;
-
 	void ImGuiDebugDraw() override;
 
-	const LightType::LightType GetType() override
+	LightType::LightType GetType() override
 	{
 		return LightType::DIRECTIONAL;
 	}
+
+protected:
+	void OnDirectionUpdate(const glm::vec3& direction) override;
 };

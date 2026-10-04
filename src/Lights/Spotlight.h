@@ -1,36 +1,39 @@
 #pragma once
 
+#include <glm/trigonometric.hpp>
 #include "LightSource.h"
 
 class Spotlight : public LightSource, public Common::HasPosition, public Common::HasDirection
 {
 private:
-	float m_InnerCutOff; // angle in degree of the light cone
-	float m_OuterCutOff; // same but upper for some fading between lit/unlit part (smooth edges)
+	float m_InnerCutOff = 12.5f; // angle in degree of the light cone
+	float m_OuterCutOff = 17.5f; // same but upper for some fading between lit/unlit part (smooth edges)
 
 public:
 	Spotlight(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	void SetInnerCutOff(float cutOff)
+	void SetInnerCutOff(const float cutOff)
 	{
 		m_InnerCutOff = cutOff;
 	}
-	inline const float GetInnerCutOff() const { return m_InnerCutOff; }
-	inline const float GetComputedInnerCutOff() const { return glm::cos(glm::radians(m_InnerCutOff)); }
+	float GetInnerCutOff() const { return m_InnerCutOff; }
+	float GetComputedInnerCutOff() const { return glm::cos(glm::radians(m_InnerCutOff)); }
 
-	void SetOuterCutOff(float cutOff)
+	void SetOuterCutOff(const float cutOff)
 	{
 		m_OuterCutOff = cutOff;
 	}
-	inline const float GetOuterCutOff() const { return m_OuterCutOff; }
-	inline const float GetComputedOuterCutOff() const { return glm::cos(glm::radians(m_OuterCutOff)); }
+	float GetOuterCutOff() const { return m_OuterCutOff; }
+	float GetComputedOuterCutOff() const { return glm::cos(glm::radians(m_OuterCutOff)); }
 
-	void OnPositionUpdate(const glm::vec3& position) override;
 
 	void ImGuiDebugDraw() override;
 
-	const LightType::LightType GetType() override
+	LightType::LightType GetType() override
 	{
 		return LightType::SPOTLIGHT;
 	}
+
+protected:
+	void OnPositionUpdate(const glm::vec3& position) override;
 };

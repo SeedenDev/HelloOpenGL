@@ -17,7 +17,7 @@ const float g_ScreenQuadVertices[] = {
 class Framebuffer
 {
 private:
-	unsigned int m_Fb, m_ColorTexture, m_Rbo, m_FbMsaa, m_ColorTextureMsaa, m_RboMsaa;
+	unsigned int m_Fb = 0, m_ColorTexture = 0, m_Rbo = 0, m_FbMsaa = 0, m_ColorTextureMsaa = 0, m_RboMsaa =0;
 	VertexArray m_Vao;
 	VertexBuffer m_Vbo = VertexBuffer(g_ScreenQuadVertices, sizeof(g_ScreenQuadVertices));
 	IndexBuffer m_Ibo = IndexBuffer(g_QuadIndices, sizeof(g_QuadIndices));
@@ -28,20 +28,20 @@ public:
 	Framebuffer(int width, int height, unsigned int msaaSample=0);
 	~Framebuffer();
 
-	void Bind(); 
-	void Unbind();
+	void Bind() const;
+	void Unbind() const;
 	//TODO: in real engine, get the proper shader from the ShaderStorage ig? Because this could lead to providing the wrong shader
 	// Same for destination fb it is stored somewhere
-	void Draw(Shader& shader, unsigned int destinationFb, int destinationWidth, int destinationHeight);
+	void Draw(Shader& shader, unsigned int destinationFb, int destinationWidth, int destinationHeight)const;
 	void Resize(int width, int height);//Should only be called when resizing the RENDERING framebuffer, not the window. (e.g. render height/scale)
 
-	void SetMsaaLevel(unsigned int msaaSample) { 
+	void SetMsaaLevel(const unsigned int msaaSample) {
 		m_MsaaSample = msaaSample;
 		UpdateMsaaFramebufferAttachments();
 	}
-	const int GetWidth() { return m_Width; }
-	const int GetHeight() { return m_Height; }
+	int GetWidth() const { return m_Width; }
+	int GetHeight() const { return m_Height; }
 
 private:
-	void UpdateMsaaFramebufferAttachments();
+	void UpdateMsaaFramebufferAttachments() const;
 };

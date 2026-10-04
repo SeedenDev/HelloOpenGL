@@ -4,7 +4,7 @@
 
 //TODO: MSAA seems to have a problem on AMD's gpus??? Have to check with default FB & glfw msaa
 
-Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
+Framebuffer::Framebuffer(const int width, const int height, const unsigned int msaaSample)
     : m_Width(width), m_Height(height), m_MsaaSample(msaaSample)
 {
     m_Vao.Bind();
@@ -24,7 +24,7 @@ Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
     glGenFramebuffers(1, &m_Fb);
     glBindFramebuffer(GL_FRAMEBUFFER, m_Fb);
 
-    // Create a texture attachement for the color 
+    // Create a texture attachment for the color
     glGenTextures(1, &m_ColorTexture);
     glActiveTexture(GL_TEXTURE30);
     glBindTexture(GL_TEXTURE_2D, m_ColorTexture);
@@ -35,7 +35,7 @@ Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorTexture, 0);
 
     //Note: for depth buffer and stencil buffer it is also possible to set a texture, and even ONE of 32bits for both (24bits depth buffer + 8bits stencil). 
-    // Attachment = GL_DEPTH/STENCIL_ATTACHEMENT ; Component (for glTexImage instead of RGBA8): GL_DEPTH_COMPONENT/GL_STENCIL_INDEX
+    // Attachment = GL_DEPTH/STENCIL_ATTACHMENT ; Component (for glTexImage instead of RGBA8): GL_DEPTH_COMPONENT/GL_STENCIL_INDEX
     // Or for 2 in 1: glTexImage = GL_DEPTH24_STENCIL8 + GL_DEPTH_STENCIL + GL_UNSIGNED_INT_24_8 
     //                glFbTexture = GL_DEPTH_STENCIL_ATTACHMENT
     // Texture: if we want read/write. Renderbuffer if we don't need to read the samples = good for depth/stencil
@@ -56,7 +56,7 @@ Framebuffer::Framebuffer(int width, int height, unsigned int msaaSample)
         glGenFramebuffers(1, &m_FbMsaa);
         glBindFramebuffer(GL_FRAMEBUFFER, m_FbMsaa);
 
-        // Create a texture attachement for the color 
+        // Create a texture attachment for the color
         glGenTextures(1, &m_ColorTextureMsaa);
         glActiveTexture(GL_TEXTURE31);
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_ColorTextureMsaa);
@@ -93,18 +93,18 @@ Framebuffer::~Framebuffer()
     }
 }
 
-void Framebuffer::Bind()
+void Framebuffer::Bind() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_MsaaSample==0 ? m_Fb : m_FbMsaa);
     glViewport(0, 0, m_Width, m_Height);
 }
 
-void Framebuffer::Unbind()
+void Framebuffer::Unbind() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::Draw(Shader& shader, unsigned int destinationFb, int destinationWidth, int destinationHeight)
+void Framebuffer::Draw(Shader& shader, const unsigned int destinationFb, const int destinationWidth, const int destinationHeight) const
 {
     if (m_MsaaSample > 0)
     {
@@ -119,13 +119,13 @@ void Framebuffer::Draw(Shader& shader, unsigned int destinationFb, int destinati
     shader.Bind();
     shader.SetUniform1i("u_Texture", 30);
     m_Vao.Bind();
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
     m_Vao.Unbind();
     shader.Unbind();
     glEnable(GL_DEPTH_TEST);
 }
 
-void Framebuffer::Resize(int width, int height)
+void Framebuffer::Resize(const int width, const int height)
 {
     m_Width = width;
     m_Height = height;
@@ -141,7 +141,7 @@ void Framebuffer::Resize(int width, int height)
     UpdateMsaaFramebufferAttachments();
 }
 
-void Framebuffer::UpdateMsaaFramebufferAttachments()
+void Framebuffer::UpdateMsaaFramebufferAttachments() const
 {
     if (m_MsaaSample > 0)
     {

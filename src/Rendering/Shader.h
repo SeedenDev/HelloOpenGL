@@ -1,8 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <fstream>
-#include <iostream>
+#include <string>
 #include <unordered_map>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -33,11 +32,10 @@ public:
 	void Bind() const;
 	void Unbind() const;
 
-    const unsigned int GetHandlerID() const { return m_HandlerID; }
+    unsigned int GetHandlerID() const { return m_HandlerID; }
 
 private:
-    std::string ParseShaderFile(const std::string& stringShaderPath);
-    unsigned int CreateShader(const GLenum shaderType, const std::string& filepath);
+    unsigned int CreateShader(GLenum shaderType, const std::string& filepath);
     unsigned int CreateProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 
     int GetUniformLocation(const std::string& name);

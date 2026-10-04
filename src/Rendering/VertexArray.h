@@ -12,7 +12,7 @@ public:
 	VertexArray();
 	~VertexArray();
 
-	void ApplyLayout(VertexBuffer& vbo, VertexLayout& vLayout);
+	void ApplyLayout(const VertexBuffer& vbo, const VertexLayout& vLayout) const;
 	void Bind() const;
 	void Unbind() const;
 };

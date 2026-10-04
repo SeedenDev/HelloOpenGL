@@ -2,8 +2,9 @@
 
 #include <curl/curl.h>
 #include <curl/easy.h>
+#include <glm/ext/matrix_transform.hpp>
 
-glm::mat4 MathUtil::ComputeModelMatrix(Geometry::Transform3D transform)
+glm::mat4 MathUtil::ComputeModelMatrix(const Geometry::Transform3D& transform)
 {
     glm::mat4 model(1.0f);
     model = glm::translate(model, transform.position);
@@ -15,19 +16,17 @@ glm::mat4 MathUtil::ComputeModelMatrix(Geometry::Transform3D transform)
     return model;
 }
 
-const std::string Curl::GetRemoteImage(const std::string& url)
+std::string Curl::GetRemoteImage(const std::string& url)
 {
     std::string data;
-
     CURL* curl = curl_easy_init();
     if (curl) {
-        CURLcode result;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToStringCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
-        result = curl_easy_perform(curl);
+        const CURLcode result = curl_easy_perform(curl);
         if (result != CURLE_OK)
             printf("error: %s\n", curl_easy_strerror(result));
         curl_easy_cleanup(curl);

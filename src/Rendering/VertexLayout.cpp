@@ -1,19 +1,19 @@
 ﻿#include "VertexLayout.h"
 
 template<typename T>
-void VertexLayout::AddAttr(GLint count)
+void VertexLayout::AddAttr(GLint /*count*/)
 {
 	static_assert(false);
 }
 
 template<>
-void VertexLayout::AddAttr<float>(GLint count)
+void VertexLayout::AddAttr<float>(const GLint count)
 {
 	AddAttribute(GL_FLOAT, count, GL_FALSE);
 }
 
 template<>
-void VertexLayout::AddAttr<double>(GLint count)
+void VertexLayout::AddAttr<double>(const GLint count)
 {
 	AddAttribute(GL_DOUBLE, count, GL_FALSE);
 }

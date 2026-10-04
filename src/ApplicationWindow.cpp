@@ -10,11 +10,10 @@
 
 ApplicationWindow* ApplicationWindow::s_Instance = nullptr;
 
-ApplicationWindow::ApplicationWindow(const std::string& title, int width, int height)
+ApplicationWindow::ApplicationWindow(const std::string& title, const int width, const int height)
     : m_Width(width), m_Height(height), m_AspectRatio((float) width / (float) height)
 {
     s_Instance = this;
-    GLFWwindow* window;
 
     if (!glfwInit())
         return;
@@ -27,7 +26,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, int width, int he
     glfwWindowHint(GLFW_SAMPLES, 0); // MSAA sample count for default window framebuffer
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -122,9 +121,9 @@ ApplicationWindow::~ApplicationWindow()
 
 void ApplicationWindow::Update()
 {
-    if (Input::IsKeyPressed(GLFW_KEY_ESCAPE))
+    if (Input::isKeyDown(GLFW_KEY_ESCAPE))
     {
-        if (Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT)) glfwSetWindowShouldClose(m_Window, true);
+        if (Input::isKeyDown(GLFW_KEY_LEFT_SHIFT)) glfwSetWindowShouldClose(m_Window, true);
         else if (m_LastTimePausePressed <= glfwGetTime())
         {
             m_Paused = !m_Paused;
@@ -135,7 +134,7 @@ void ApplicationWindow::Update()
 }
 
 // private
-void ApplicationWindow::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+void ApplicationWindow::FramebufferSizeCallback(GLFWwindow* window, const int width, const int height)
 {
     Resize(width, height);
 }
@@ -155,7 +154,7 @@ void ApplicationWindow::MouseButtonCallback(GLFWwindow* window, int button, int 
 
 }
 
-void ApplicationWindow::WindowFocusCallback(GLFWwindow* window, int focused)
+void ApplicationWindow::WindowFocusCallback(GLFWwindow* window, const int focused)
 {
     m_Focused = focused == GL_TRUE;
 }

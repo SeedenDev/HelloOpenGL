@@ -1,7 +1,9 @@
 #include "Shader.h"
 
+#include <iostream>
 #include <filesystem>
 #include <glm/gtc/type_ptr.hpp>
+#include "GlobalUtil.h"
 
 Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
     : m_VertexShaderPath(vertexShaderPath), m_FragmentShaderPath(fragmentShaderPath)
@@ -16,7 +18,7 @@ Shader::~Shader()
 
 void Shader::Reload()
 {
-    unsigned int rendererID = CreateProgram(m_VertexShaderPath, m_FragmentShaderPath);
+    const unsigned int rendererID = CreateProgram(m_VertexShaderPath, m_FragmentShaderPath);
     if (rendererID == 0)
     {
         std::cout << "Error: reloading shader program failed!" << std::endl;
@@ -27,27 +29,27 @@ void Shader::Reload()
     m_HandlerID = rendererID;
 }
 
-void Shader::SetUniform1i(const std::string& name, int v0)
+void Shader::SetUniform1i(const std::string& name, const int v0)
 {
     glUniform1i(GetUniformLocation(name), v0);
 }
 
-void Shader::SetUniform1f(const std::string& name, float v0)
+void Shader::SetUniform1f(const std::string& name, const float v0)
 {
     glUniform1f(GetUniformLocation(name), v0);
 }
 
-void Shader::SetUniform2f(const std::string& name, float v0, float v1)
+void Shader::SetUniform2f(const std::string& name, const float v0, const float v1)
 {
     glUniform2f(GetUniformLocation(name), v0, v1);
 }
 
-void Shader::SetUniform3f(const std::string& name, float v0, float v1, float v2)
+void Shader::SetUniform3f(const std::string& name, const float v0, const float v1, const float v2)
 {
     glUniform3f(GetUniformLocation(name), v0, v1, v2);
 }
 
-void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+void Shader::SetUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3)
 {
     glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
 }
@@ -83,36 +85,11 @@ void Shader::Unbind() const
 }
 
 // private
-std::string Shader::ParseShaderFile(const std::string& stringShaderPath)
-{
-    // C++ way of reading file, on the basis of how to do it with the C API (could be a little bit quicker)
-    //TODO: refactor with this UTF8 way of opening/accessing files everywhere in the project (and like i should just ALWAYS use it when i'm handling files)
-    const std::filesystem::path path(std::u8string(stringShaderPath.begin(), stringShaderPath.end()));
-    const std::u8string absolutePath = std::filesystem::absolute(path).u8string();
-    std::cout << "Shader path: " << std::string(absolutePath.begin(), absolutePath.end()) << std::endl;
-
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream) throw std::runtime_error("Failed to open shader file.");
-
-    stream.seekg(0, std::ios::end);
-    std::streampos size = stream.tellg();
-    if (size < 0) throw std::runtime_error("Shader file size is invalid: " + std::to_string(size));
-
-    std::string contents;
-    contents.resize(size);
-    stream.seekg(0, std::ios::beg);
-    stream.read(&contents[0], size);
-    if (!stream) throw std::runtime_error("Failed to read shader file.");
-
-    stream.close();
-    return contents;
-}
-
 unsigned int Shader::CreateShader(const GLenum shaderType, const std::string& filepath)
 {
-    std::string fileStr = ParseShaderFile(filepath);
+    const std::string fileStr = File::LoadFileContent(filepath);
     const char* shaderSrc = fileStr.c_str();
-    unsigned int shader = glCreateShader(shaderType);
+    const unsigned int shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &shaderSrc, NULL);
     glCompileShader(shader);
 
@@ -134,10 +111,10 @@ unsigned int Shader::CreateShader(const GLenum shaderType, const std::string& fi
 
 unsigned int Shader::CreateProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
 {
-    unsigned int vertexShader = CreateShader(GL_VERTEX_SHADER, vertexShaderPath);
-    unsigned int fragShader = CreateShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
+    const unsigned int vertexShader = CreateShader(GL_VERTEX_SHADER, vertexShaderPath);
+    const unsigned int fragShader = CreateShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
 
-    unsigned int shaderProgram = glCreateProgram();
+    const unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragShader);
     glLinkProgram(shaderProgram);
@@ -162,7 +139,7 @@ unsigned int Shader::CreateProgram(const std::string& vertexShaderPath, const st
 //TODO: just cache all the uniform locations (w/name) on shader loading (+ check Uniform Buffer Object, seems a nice thing)
 int Shader::GetUniformLocation(const std::string& name)
 {
-    if (auto x = m_UniformLocations.find(name); x != m_UniformLocations.end()) return x->second;
+    if (const auto x = m_UniformLocations.find(name); x != m_UniformLocations.end()) return x->second;
     
     int location = glGetUniformLocation(m_HandlerID, name.c_str());
     if (location == -1)

@@ -13,8 +13,7 @@ Disclaimer: as I kinda said before, I know this code is ahh, please be kind to m
 
 ## TODOs
 - More rendering stuff, but in the first place finish at least [LearnOpenGL.com](https://learnopengl.com/) tutorials.
-  - Optimise models loading (very long atm)
-          - Test on Linux: asm output and preprocessed output working? (with the new fixed cmakelists.txt)
+- Optimise models loading (very long atm)
 - Change how asm output and preprocessed output is handled (custom target?)
 - More CMake stuff (cross-compilation to more targets and w/ more options, more Windows setup choices)
 - Once MinGW GCC/Clang build presets (with ninja) are there for native Windows: test that the -mwindows linker flag is working (windowed app = no console)
@@ -31,7 +30,7 @@ Disclaimer: as I kinda said before, I know this code is ahh, please be kind to m
 - Any C++20 compilers should work. Tested using:
   - **Linux**: GCC 16.1 or Clang 22.1
   - **Windows (to-be-tested)**: MSVC (using Visual Studio 2022 or 2026) *or [TODO] GCC/Clang (using Ninja generator)*
-  - **Cross-compile Linux x64 -> Windows x64**: x86_64-w64-mingw32-g++ (using gcc 16.1) // BROKEN!!! bc of libcurl
+  - **Cross-compile Linux x64 -> Windows x64**: x86_64-w64-mingw32-g++ (using gcc 16.1)
   - **Cross-compile Windows x64 -> Linux x64**: WIP
 
 ### About macOS support
@@ -41,8 +40,8 @@ enable or not some features. I will definitely need this knowledge in the future
 Nonetheless, feel free to do your own modifications if you want to try making it run on Mac (and make a PR :D).
 
 ## Setup / Build / Run / Cross-compile
-Simply put: basic CMake project. Setup and build with the preconfigured presets. You also have cross-compilation toolchain files (WIP).
-Or you can use your favorite IDE (tested with Microsoft Visual Studio 2022 on Windows x64 and CLion on Linux x64).
+Simply put: basic CMake project. Setup and build with the preconfigured presets. You also have cross-compilation toolchain files and build presets (WIP, Linux->Windows working).
+Or you can use your favorite IDE (tested with Microsoft Visual Studio 2022 on Windows x64 and CLion on Linux x64). You should also see the cross-compilation presets in your IDE.
 
 - CLion info: don't forget to set the WORKING_DIR in your run configuration. An example config file can be found in `cmake/ide-templates/clion/runConfigurations`.
   You should be able to use the `$ProjectFileDir$` variable to automatically target this root folder.

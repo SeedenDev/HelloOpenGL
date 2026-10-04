@@ -6,34 +6,34 @@ class PointLight : public GlobalLight
 {
 private:
 	// Attenuation parameters
-	float m_Constant;
-	float m_Linear;
-	float m_Quadratic;
+	float m_Constant = 1.0f;
+	float m_Linear = 0.225f;
+	float m_Quadratic = 0.032f;
 
 public:
 	PointLight(const glm::vec3& position, const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	void SetConstant(float constant)
+	void SetConstant(const float constant)
 	{
 		m_Constant = constant;
 	}
-	inline const float GetConstant() const { return m_Constant; }
+	float GetConstant() const { return m_Constant; }
 
-	void SetLinear(float linear)
+	void SetLinear(const float linear)
 	{
 		m_Linear = linear;
 	}
-	inline const float GetLinear() const { return m_Linear; }
+	float GetLinear() const { return m_Linear; }
 
-	void SetQuadratic(float quadratic)
+	void SetQuadratic(const float quadratic)
 	{
 		m_Quadratic = quadratic;
 	}
-	inline const float GetQuadratic() const { return m_Quadratic; }
+	float GetQuadratic() const { return m_Quadratic; }
 
 	void ImGuiDebugDraw() override;
 
-	const LightType::LightType GetType() override
+	LightType::LightType GetType() override
 	{
 		return LightType::POINT;
 	}

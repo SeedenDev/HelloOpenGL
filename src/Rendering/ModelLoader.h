@@ -23,15 +23,15 @@ private:
 	std::vector<unsigned int> m_Indices;
 	Material m_Material;
 
-	unsigned int m_Vao, m_Vbo, m_Ibo;
+	unsigned int m_Vao = 0, m_Vbo = 0, m_Ibo = 0;
 
 public:
-	Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, Material& material);
+	Mesh(std::vector<MeshVertex>& vertices, std::vector<unsigned int>& indices, const Material& material);
 	~Mesh();
 
-	inline const Material& GetMaterial() const { return m_Material; }
+	const Material& GetMaterial() const { return m_Material; }
 
-	void Draw(Shader& shader);
+	void Draw(Shader& shader) const;
 
 private:
 	void SetupGLData();
@@ -48,16 +48,16 @@ private:
 	std::unordered_map<std::string, unsigned int> m_CachedTextures;
 
 public:
-	Model(const char* path, bool flipUVOnLoad=1);
+	explicit Model(const char* filePath, bool flipUVOnLoad=1);
 	~Model();
 
 	void Draw(Shader& shader);
 
 private:
 	void Load();
-	void ProcessNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
+	void ProcessNode(const aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
 	void ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes);
-	int GetMaterialTextureIndex(aiMaterial* mat, aiTextureType type);
-	void LoadMaterialProperties(aiMaterial* mat, Material& outMaterial);
+	int GetMaterialTextureIndex(const aiMaterial* mat, aiTextureType type);
+	void LoadMaterialProperties(const aiMaterial* mat, Material& outMaterial);
 	void LoadEmbeddedTextures(const aiScene*);
 };

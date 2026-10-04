@@ -1,6 +1,5 @@
 #pragma once
 
-#include <type_traits>
 #include <string>
 
 #include "ImGuiDebugInterface.h"
@@ -13,9 +12,9 @@ namespace LightType
 		GLOBAL, DIRECTIONAL, POINT, SPOTLIGHT, FLASHLIGHT
 	};
 
-	static const std::string typeNames[] = { "Global", "Directional", "Point", "Spotlight", "Flashlight" };
+	inline const std::string typeNames[] = { "Global", "Directional", "Point", "Spotlight", "Flashlight" };
 
-	static const std::string& GetTypeString(LightType type)
+	inline const std::string& GetTypeString(const LightType type)
 	{
 		return typeNames[type];
 	}
@@ -36,15 +35,15 @@ protected:
 public:
 	LightSource(const glm::vec3& ambientColor, const glm::vec3& diffuseColor, const glm::vec3& specularColor);
 
-	const bool IsToggled() const { return m_Toggle; }
+	bool IsToggled() const { return m_Toggle; }
 
-	inline const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
-	inline const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
-	inline const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
+	const glm::vec3& GetAmbientColor() const { return m_AmbientColor; }
+	const glm::vec3& GetDiffuseColor() const { return m_DiffuseColor; }
+	const glm::vec3& GetSpecularColor() const { return m_SpecularColor; }
 
 	virtual void DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
 
 	void ImGuiDebugDraw() override;
 
-	virtual const LightType::LightType GetType() = 0;
+	virtual LightType::LightType GetType() = 0;
 };

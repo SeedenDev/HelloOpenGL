@@ -1,14 +1,14 @@
 #include "Texture.h"
 
-#include <glad/glad.h>
-#include <stb/stb_image.h>
 #include <iostream>
 #include <filesystem>
+#include <glad/glad.h>
+#include <stb/stb_image.h>
 
 static int i = 0; //TODO: remove or index/identifier in the asset storage (for debug)
 
 Texture::Texture(const std::string& texturePath)
-	: m_HandlerID(0), m_TexturePath(texturePath), m_DataBuffer(nullptr), m_Width(0), m_Height(0), m_bytesPerChannel(0)
+	: m_TexturePath(texturePath)
 {
 	stbi_set_flip_vertically_on_load(1);
 	m_DataBuffer = stbi_load(texturePath.c_str(), &m_Width, &m_Height, &m_bytesPerChannel, 4);
@@ -18,8 +18,7 @@ Texture::Texture(const std::string& texturePath)
 	//std::cout << "texture(file) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
-Texture::Texture(const unsigned char* data, int length)
-	: m_HandlerID(0), m_TexturePath(""), m_DataBuffer(nullptr), m_Width(0), m_Height(0), m_bytesPerChannel(0)
+Texture::Texture(const unsigned char* data, const int length)
 {
 	stbi_set_flip_vertically_on_load(1);
 	m_DataBuffer = stbi_load_from_memory(data, length, &m_Width, &m_Height, &m_bytesPerChannel, 4);
@@ -35,7 +34,7 @@ Texture::~Texture()
 	//std::cout << "texture destructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
-void Texture::Bind(unsigned int slot)
+void Texture::Bind(const unsigned int slot)
 {
 	m_LastSlot = slot;
 	glActiveTexture(GL_TEXTURE0 + slot);

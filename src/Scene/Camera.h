@@ -13,40 +13,42 @@ private:
     float m_FOV = 70.0f, m_Near = 0.005f, m_Far = 256.0f;
     //TODO: with this low near we can now see objects from very close but there is still a problem being: depth buffer with objects a bit far (artefacts)
 
-    glm::vec3 m_CamPos, m_CamFront, m_CamRight, m_CamUp;
+    glm::vec3 m_CamPos = glm::vec3(0.0f), m_CamRight = glm::vec3(0.0f);
+    glm::vec3 m_CamFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 m_CamUp = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 m_ViewMatrix = glm::mat4(1.0f), m_ProjMatrix = glm::mat4(1.0f);
 
     bool m_FirstCall = 1;
-    double m_LastMouseX, m_LastMouseY;
+    double m_LastMouseX = 0, m_LastMouseY = 0;
 
 public:
     static glm::vec3 s_WorldUp;
 
-    Camera(float aspectRatio);
+    explicit Camera(float aspectRatio);
 
     ~Camera();
 
     void Update(double deltaTime);
 
-    inline void SetAspectRatio(float aspectRatio)
+    void SetAspectRatio(const float aspectRatio)
     {
         m_AspectRatio = aspectRatio;
     }
 
-    inline const void SetHorizontalSpeed(const float speed) { m_HorizontalSpeed = speed ; }
-    inline const void SetVerticalSpeed(const float speed) { m_VerticalSpeed = speed; }
+    void SetHorizontalSpeed(const float speed) { m_HorizontalSpeed = speed ; }
+    void SetVerticalSpeed(const float speed) { m_VerticalSpeed = speed; }
 
-    inline const float GetHorizontalSpeed() const { return m_HorizontalSpeed; }
-    inline const float GetVerticalSpeed() const { return m_VerticalSpeed; }
+    float GetHorizontalSpeed() const { return m_HorizontalSpeed; }
+    float GetVerticalSpeed() const { return m_VerticalSpeed; }
 
-    inline const glm::vec3& GetPosition() const { return m_CamPos; }
-    inline const glm::mat4& GetView() const { return m_ViewMatrix; }
-    inline const glm::mat4& GetProj() const { return m_ProjMatrix; }
-    inline const glm::vec3& GetFront() const { return m_CamFront; }
+    const glm::vec3& GetPosition() const { return m_CamPos; }
+    const glm::mat4& GetView() const { return m_ViewMatrix; }
+    const glm::mat4& GetProj() const { return m_ProjMatrix; }
+    const glm::vec3& GetFront() const { return m_CamFront; }
 
-    inline const float GetFOV() const { return m_FOV; }
-    inline const float GetYaw() const { return m_Yaw; }
-    inline const float GetPitch() const { return m_Pitch; }
+    float GetFOV() const { return m_FOV; }
+    float GetYaw() const { return m_Yaw; }
+    float GetPitch() const { return m_Pitch; }
 
 private:
 

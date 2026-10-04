@@ -1,7 +1,6 @@
 #include "VertexArray.h"
 
 #include <glad/glad.h>
-#include <string>
 
 VertexArray::VertexArray()
 {
@@ -17,7 +16,7 @@ VertexArray::~VertexArray()
 	glDeleteVertexArrays(1, &m_HandlerID);
 }
 
-void VertexArray::ApplyLayout(VertexBuffer& vbo, VertexLayout& vLayout)
+void VertexArray::ApplyLayout(const VertexBuffer& vbo, const VertexLayout& vLayout) const
 {
 	Bind();
 	vbo.Bind();

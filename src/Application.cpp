@@ -347,7 +347,7 @@ int main()
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastTime;
 
-        if (vSync || (!vSync && (!unlimitedFPS && deltaTime >= deltaTimeLimit) || (unlimitedFPS)))
+        if (vSync || (!vSync && !unlimitedFPS && deltaTime >= deltaTimeLimit) || unlimitedFPS)
         {
             /* Fps counter */
             float fps = 1 / deltaTime;
@@ -366,7 +366,7 @@ int main()
             lastTime = currentTime;
 
             /* Update */
-            if (Input::IsKeyPressed(GLFW_KEY_R))
+            if (Input::isKeyDown(GLFW_KEY_R))
             {
                 basicUnlitShader.Reload();
                 basicUnlitShader.Bind();
@@ -434,7 +434,7 @@ int main()
             //TODO: the Common interfaces thing could be removed with proper implementations i think.. (btw I read CPP casts are now faster that C-style ones on modern compiler so..)
             int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for (int i = 0; i < lightsStack.size(); i++)
+            for (unsigned int i = 0; i < lightsStack.size(); i++)
             {
                 LightSource* light = lightsStack[i];//lights[i];
                 if (!light->IsToggled()) continue;
@@ -612,7 +612,7 @@ int main()
             }
 
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for (int i = 0; i < lightsStack.size(); i++)
+            for (unsigned int i = 0; i < lightsStack.size(); i++)
             {
                 LightSource* light = lightsStack[i];//lights[i];
                 if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
@@ -668,7 +668,7 @@ int main()
                     ImGui::BeginTabBar("lightsseparator");
                     ImGui::EndTabBar();
                     //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-                    for (int i = 0; i < lightsStack.size(); i++)
+                    for (unsigned int i = 0; i < lightsStack.size(); i++)
                     {
                         if (ImGui::Button((GetTypeString(/*lights*/lightsStack[i]->GetType()) + "Light " + std::to_string(i)).c_str()))
                         {
@@ -698,7 +698,7 @@ int main()
                     }
                     ImGui::BeginTabBar("cubesseparator");
                     ImGui::EndTabBar();
-                    for (int i = 0; i < cubes.size(); i++)
+                    for (unsigned int i = 0; i < cubes.size(); i++)
                     {
                         if (ImGui::Button(("Cube " + std::to_string(i)).c_str()))
                         {

@@ -8,8 +8,8 @@ LightSource::LightSource(const glm::vec3& ambientColor, const glm::vec3& diffuse
 
 void LightSource::DrawDebugCube(Shader& shader, const glm::mat4& view, const glm::mat4& projection) const
 {
-	glm::mat4 model = m_DebugCube.GetModelMatrix();
-	glm::mat4 MVP = projection * view * model;
+	const glm::mat4 model = m_DebugCube.GetModelMatrix();
+	const glm::mat4 MVP = projection * view * model;
 	shader.SetUniformMat4f("u_View", view);
 	shader.SetUniformMat4f("u_Projection", projection);
 	shader.SetUniformMat4f("u_Model", model);

@@ -3,13 +3,11 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 #include "GlobalUtil.h"
 #include "Rendering/VertexArray.h"
 #include "Rendering/VertexBuffer.h"
 #include "Rendering/IndexBuffer.h"
-#include "Rendering/VertexLayout.h"
 
 const float g_CubeVertices[] = {
     // pos               // color          // texture  // normal
@@ -70,38 +68,38 @@ private:
     Geometry::Transform3D m_Transform;
     glm::vec4 m_Color;
 
-    glm::mat4 m_ModelMatrix;
+    glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
 
 public:
-    Cube(glm::vec3 position, glm::vec4 color = glm::vec4(1.0f));
+    explicit Cube(const glm::vec3& position, const glm::vec4& color = glm::vec4(1.0f));
     ~Cube();
 
-    inline const glm::vec3& GetPosition() const { return m_Transform.position; }
-    inline const glm::vec3& GetEulerRotation() const { return m_Transform.rotation; }
-    inline const glm::vec3& GetScale() const { return m_Transform.scale; }
-    inline const glm::vec4& GetColor() const { return m_Color; }
+    const glm::vec3& GetPosition() const { return m_Transform.position; }
+    const glm::vec3& GetEulerRotation() const { return m_Transform.rotation; }
+    const glm::vec3& GetScale() const { return m_Transform.scale; }
+    const glm::vec4& GetColor() const { return m_Color; }
 
-    void SetPosition(glm::vec3 newPos)
+    void SetPosition(const glm::vec3& newPos)
     {
         m_Transform.position = newPos;
         UpdateModelMatrix();
     }
-    void Translate(glm::vec3 translation)
+    void Translate(const glm::vec3& translation)
     {
         m_Transform.position += translation;
         UpdateModelMatrix();
     }
-    void SetEulerRotation(glm::vec3 newRotation)
+    void SetEulerRotation(const glm::vec3& newRotation)
     {
         m_Transform.rotation = newRotation;
         UpdateModelMatrix();
     }
-    void RotateEuler(glm::vec3 rotation)
+    void RotateEuler(const glm::vec3& rotation)
     {
         m_Transform.rotation += rotation;
         UpdateModelMatrix();
     }
-    void SetScale(glm::vec3 newScale)
+    void SetScale(const glm::vec3& newScale)
     {
         m_Transform.scale = newScale;
         UpdateModelMatrix();
@@ -109,7 +107,7 @@ public:
 
     void Draw() const;
 
-    inline const glm::mat4& GetModelMatrix() const { return m_ModelMatrix; }
+    const glm::mat4& GetModelMatrix() const { return m_ModelMatrix; }
 
 private:
 

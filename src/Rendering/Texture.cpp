@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 #include <stb/stb_image.h>
 
+// C++ memo: if only using one constructor, could have been a local static variable (tho removing it from there is still the best option lmao)
 static int i = 0; //TODO: remove or index/identifier in the asset storage (for debug)
 
 Texture::Texture(const std::string& texturePath)
@@ -18,7 +19,7 @@ Texture::Texture(const std::string& texturePath)
 	//std::cout << "texture(file) constructor" << std::to_string(index) << "|" << std::to_string(m_HandlerID) << std::endl;
 }
 
-Texture::Texture(const unsigned char* data, const int length)
+Texture::Texture(const unsigned char* const data, const int length)
 {
 	stbi_set_flip_vertically_on_load(1);
 	m_DataBuffer = stbi_load_from_memory(data, length, &m_Width, &m_Height, &m_bytesPerChannel, 4);

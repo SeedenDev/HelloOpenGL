@@ -48,7 +48,7 @@ private:
 	std::unordered_map<std::string, unsigned int> m_CachedTextures;
 
 public:
-	explicit Model(const char* filePath, bool flipUVOnLoad=1);
+	explicit Model(const std::string& filePath, bool flipUVOnLoad=1);
 	~Model();
 
 	void Draw(Shader& shader);
@@ -56,7 +56,7 @@ public:
 private:
 	void Load();
 	void ProcessNode(const aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
-	void ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes);
+	void ProcessMesh(const aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes);
 	int GetMaterialTextureIndex(const aiMaterial* mat, aiTextureType type);
 	void LoadMaterialProperties(const aiMaterial* mat, Material& outMaterial);
 	void LoadEmbeddedTextures(const aiScene*);

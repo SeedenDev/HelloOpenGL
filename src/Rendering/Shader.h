@@ -35,7 +35,7 @@ public:
     unsigned int GetHandlerID() const { return m_HandlerID; }
 
 private:
-    unsigned int CreateShader(GLenum shaderType, const std::string& filepath);
+    unsigned int CreateShader(GLenum shaderType, const std::string& shaderFilePath);
     unsigned int CreateProgram(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 
     int GetUniformLocation(const std::string& name);

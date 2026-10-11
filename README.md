@@ -1,15 +1,41 @@
 # HelloOpenGL 
-Learning OpenGL from several sources on the web, but highly following the tutorials from [LearnOpenGL.com]((https://learnopengl.com/)) as for the beginning.
-My first project written in C++ too, so I'm also learning it here.
+Small rendering engine done while learning OpenGL from several sources on the web, mostly following the tutorials from [LearnOpenGL.com]((https://learnopengl.com/)).
+My first project written in C++ too, I'm learning it at the same time, refactoring some part when I learn new things.
 
-I intend to archive this repository as soon as I'm done with the TODOs to start from scratch another engine but this time with a better code architecture.
-I've already learnt a lot from this project (and since I've started learning including other stuff like browsing opensource code) and there are some design problems 
-I don't want to waste time on here to fix/refactor, it'll be better starting off anew to do cleaner code and consolidate my knowledge.
+I intend to archive this repository as soon as I'm done with the TODOs - or rather with [LearnOpenGL.com](https://learnopengl.com/)'s tutorials - to start from scratch on cleaner 
+basis with better code architecture. This project started very quickly to become a design trap as I was a complete , but it's a learning project where I "dump" individual stuff inside a bunch of other stuff, without thinking much
+about it generally, so please take this into consideration when reading it. And if you have any tip feel free to open an issue or contact me on Discord! :)beginner, and even thought I could refactor everything 
+I think it'd waste more time than starting anew.
+Obviously, the second try will also be pretty bad I guess, but surely not so closed to expanding features as this one. 
+I've already learnt a lot from this project, and more globally since I've started learning C++/OpenGL (including other means like browsing opensource code)
+so next time it'll be better :) Moreover, it'll allow me to consolidate my knowledge by writing again what I already know - or think I know that will show me I forgot them haha.
 
-Disclaimer: as I kinda said before, I know this code is ahh, please be kind to me in your head if you read it lol.
+So yep disclaimer: keep in mind I acknowledge this code is really bad, I don't want to refactor it so it'll stay bad and become even worse as more features will be added
+throughout the tutorials. I don't care anymore about it being clean, I'll just go forward and learn graphics.
+Btw, the TODO list below is more of a general TODO list for any of C++ projects, I'll progressively go through it adding more options for building with CMake,
+and I'll probably implement those on any project I'll actively be working on before backporting it to my older projects.
 
 ## Features
-- WIP
+- Basic lighting (Phong model) with point/directional lights including spotlights/flashlight
+- MSAA 
+- Framebuffer size (render 4K then downscale to window size, even with MSAA off)
+- Model loading using Assimp library
+- Basic cube's outlining
+- Blending BUT without transparent textures support (scene's elements are not sorted so it'd be bad but I don't want to spend time on it as OIT exists)
+- Skybox
+- Basic fog system
+- FPS flying camera
+- Scene editor (no load/save) for lights and cubes using Dear ImGui
+- and other runtime settings via Dear Imgui
+
+### Keybindings:
+- Camera controls: ZQSD/space/left control ; left shift to go faster
+- FOV: home/end
+- Far plane: page up/page down (further/closer)
+- Near plane: left shift + page up/down (further/closer)
+- Show cursor: escape
+- Fast close: left shift + escape
+- Shaders hot-reloading: R
 
 ## TODOs
 - More rendering stuff, but in the first place finish at least [LearnOpenGL.com](https://learnopengl.com/) tutorials.
@@ -19,14 +45,16 @@ Disclaimer: as I kinda said before, I know this code is ahh, please be kind to m
 - Once MinGW GCC/Clang build presets (with ninja) are there for native Windows: test that the -mwindows linker flag is working (windowed app = no console)
 - Test on Windows using Visual Studio 2026
 - Make the project works on Windows ARM64 and Linux Aarch64 eventually
-- The README
 - Check gitignored models' licenses
-- Fix gitmodules
+- Fix gitmodules (or don't use them mhm)
 
 ## Requirements
-- CMake 3.21 or higher
+### Runtime
 - An OpenGL 4.5+ capable GPU driver (Warning: may evolve in the future in order to test 4.6 features)
-- Linux x64 or Windows x64.
+- Linux x64 and Windows x64 (tested, maybe the Windows' version could run on macOS through Wine/Proton)
+### Compilation
+- CMake 3.21 or higher
+- Linux x64 or Windows x64 (available build presets).
 - Any C++20 compilers should work. Tested using:
   - **Linux**: GCC 16.1 or Clang 22.1
   - **Windows (to-be-tested)**: MSVC (using Visual Studio 2022 or 2026) *or [TODO] GCC/Clang (using Ninja generator)*
@@ -65,4 +93,4 @@ Btw, don't forget to include the `assets` folder alongside the executable if you
 ## Licenses
 The code for this program is licensed under the "Unlicense" license. See `LICENSE.txt` file for more information.
 
-Every third party license is available in their corresponding vendor subfolders.
+Every third party license is available in their corresponding vendor subfolders. Same goes for the models.

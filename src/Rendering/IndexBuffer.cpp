@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-IndexBuffer::IndexBuffer(const unsigned int* indices, const unsigned int count)
+IndexBuffer::IndexBuffer(const unsigned int* const indices, const unsigned int count)
 	: m_Count(count)
 {
 	unsigned int ibo;

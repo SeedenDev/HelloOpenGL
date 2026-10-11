@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <glad/glad.h>
+#include <glad/glad.h> //needed to import it here bc has to be before glfw (even tho i'm using glad only in the cpp file)
 #include <GLFW/glfw3.h>
 
 class ApplicationWindow
@@ -17,7 +17,7 @@ private:
 	bool m_Paused = 0;
 	bool m_Focused = 1;
 
-	double m_LastTimePausePressed = 0; // Temp fix for "pausing" (access cursor) bc it's hell
+	double m_LastTimePausePressed = 0; // Temp fix for "pausing" (access cursor) bc it's hell (would be fix with a proper Input system like HellEngine tbf)
 
 public:
 	ApplicationWindow(const std::string& title, int width, int height);
@@ -42,7 +42,6 @@ public:
 
 	void Resize(const int width, const int height)
 	{
-		glViewport(0, 0, width, height);
 		m_Width = width;
 		m_Height = height;
 		m_AspectRatio = (float)width / (float)height;
@@ -50,7 +49,7 @@ public:
 
 	int ShouldClose() const { return glfwWindowShouldClose(m_Window); }
 
-	GLFWwindow* GetWindowPointer() const { return m_Window; }
+	const GLFWwindow* const GetWindowPointer() const { return m_Window; }
 
 	float GetAspectRatio() const { return m_AspectRatio; }
 
@@ -69,4 +68,5 @@ private:
 	void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 	void WindowFocusCallback(GLFWwindow* window, int focused);
+	void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };

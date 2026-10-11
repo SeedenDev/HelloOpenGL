@@ -13,7 +13,7 @@ private:
 
 public:
 	explicit Texture(const std::string& texturePath);
-	explicit Texture(const unsigned char* data, int length);
+	Texture(const unsigned char* data, int length);
 	~Texture();
 
 	void Bind(unsigned int slot);

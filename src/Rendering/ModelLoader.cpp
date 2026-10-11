@@ -50,8 +50,8 @@ void Mesh::SetupGLData()
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)offsetof(MeshVertex, textureUV)); // 3*sizeof(float)+3*sizeof(float)=6*sizeof(float)
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*) offsetof(MeshVertex, normal)); // 3*sizeof(float)
-	
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)offsetof(MeshVertex, normal)); // 3*sizeof(float)
+
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -59,7 +59,7 @@ void Mesh::SetupGLData()
 
 
 /* Model class */
-Model::Model(const char* filePath, const bool flipUVOnLoad)
+Model::Model(const std::string& filePath, const bool flipUVOnLoad)
 	: m_FilePath(filePath), m_FlipUVOnLoad(flipUVOnLoad)
 {
 	m_AssetPath = m_FilePath.substr(0, m_FilePath.find_last_of("/")); //TODO: perhaps a better way exists
@@ -109,7 +109,7 @@ void Model::Load()
 	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_EMBEDDED_TEXTURES_LEGACY_NAMING, 1);
 	unsigned int importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
 	if (m_FlipUVOnLoad) importFlags |= aiProcess_FlipUVs;
-	const aiScene* scene = importer.ReadFile(m_FilePath, importFlags);
+	const aiScene* const scene = importer.ReadFile(m_FilePath, importFlags);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -125,7 +125,7 @@ void Model::Load()
 	m_CachedTextures.clear();
 }
 
-void Model::ProcessNode(const aiNode* node, const aiScene* scene, const glm::mat4& parentTransform)
+void Model::ProcessNode(const aiNode* const node, const aiScene* const scene, const glm::mat4& parentTransform)
 {
 	const aiMatrix4x4 mat = node->mTransformation;
 	const glm::mat4 nodeTransform = glm::mat4(
@@ -146,7 +146,7 @@ void Model::ProcessNode(const aiNode* node, const aiScene* scene, const glm::mat
 	}
 }
 
-void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes)
+void Model::ProcessMesh(const aiMesh* const mesh, const aiScene* const scene, const glm::mat4& nodeTransform, std::vector<Mesh>& outMeshes)
 {
 	std::vector<MeshVertex> vertices;
 	std::vector<unsigned int> indices;
@@ -186,7 +186,7 @@ void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
 	outMeshes.emplace_back(vertices, indices, material);
 }
 
-int Model::GetMaterialTextureIndex(const aiMaterial* mat, const aiTextureType type)
+int Model::GetMaterialTextureIndex(const aiMaterial* const mat, const aiTextureType type)
 {
 	//std::cout << "Loading texture type " << std::to_string(type) << ": found " << std::to_string(mat->GetTextureCount(type)) << std::endl;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -206,7 +206,7 @@ int Model::GetMaterialTextureIndex(const aiMaterial* mat, const aiTextureType ty
 	return -1;
 }
 
-void Model::LoadMaterialProperties(const aiMaterial* mat, Material& outMaterial)
+void Model::LoadMaterialProperties(const aiMaterial* const mat, Material& outMaterial)
 {
 	aiColor3D color(0.f, 0.f, 0.f);
 	float value = 0.0f;
@@ -243,13 +243,13 @@ void Model::LoadMaterialProperties(const aiMaterial* mat, Material& outMaterial)
 	// AI_MATKEY_TWOSIDED int
 }
 
-void Model::LoadEmbeddedTextures(const aiScene* scene)
+void Model::LoadEmbeddedTextures(const aiScene* const scene)
 {
 	for (unsigned int i = 0; i < scene->mNumTextures; i++)
 	{
-		const aiTexture* texture = scene->mTextures[i];
+		const aiTexture* const texture = scene->mTextures[i];
 
-		const unsigned char* textureData = reinterpret_cast<unsigned char*>(texture->pcData);
+		const unsigned char* const textureData = reinterpret_cast<unsigned char*>(texture->pcData);
 		int texSize = texture->mHeight == 0 ? texture->mWidth : texture->mWidth * texture->mHeight;
 
 		m_Textures.emplace_back(textureData, texSize);

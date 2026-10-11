@@ -85,10 +85,10 @@ void Shader::Unbind() const
 }
 
 // private
-unsigned int Shader::CreateShader(const GLenum shaderType, const std::string& filepath)
+unsigned int Shader::CreateShader(const GLenum shaderType, const std::string& shaderFilePath)
 {
-    const std::string fileStr = File::LoadFileContent(filepath);
-    const char* shaderSrc = fileStr.c_str();
+    const std::string fileContent = File::LoadFileContent(shaderFilePath);
+    const char* const shaderSrc = fileContent.c_str();
     const unsigned int shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &shaderSrc, NULL);
     glCompileShader(shader);
@@ -100,7 +100,7 @@ unsigned int Shader::CreateShader(const GLenum shaderType, const std::string& fi
     {
         int length;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        char* log = (char*) alloca(length * sizeof(char));
+        char* log = (char*) alloca(length * sizeof(char)); // memory on the stack but freed when leaving the function not the scope /!\ to use with caution
         glGetShaderInfoLog(shader, length, NULL, log);
         std::cout << "ERROR::SHADER::" << (shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT") << "::COMPILATION_FAILED\n" << log << std::endl;
         glDeleteShader(shader);
@@ -127,12 +127,16 @@ unsigned int Shader::CreateProgram(const std::string& vertexShaderPath, const st
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success)
     {
-        char infoLog[512];
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        int length;
+        glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &length);
+        char* log = (char*) alloca(length * sizeof(char)); // memory on the stack but freed when leaving the function not the scope /!\ to use with caution
+        glGetProgramInfoLog(shaderProgram, length, &length, log);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << log << std::endl;
         glDeleteProgram(shaderProgram);
         return 0;
     }
+    glDetachShader(shaderProgram, vertexShader);
+    glDetachShader(shaderProgram, fragShader);
     return shaderProgram;
 }
 

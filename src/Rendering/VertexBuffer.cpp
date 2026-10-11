@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-VertexBuffer::VertexBuffer(const float* vertices, const unsigned int size)
+VertexBuffer::VertexBuffer(const float* const vertices, const unsigned int size)
 {
 	unsigned int vbo;
 	glGenBuffers(1, &vbo);

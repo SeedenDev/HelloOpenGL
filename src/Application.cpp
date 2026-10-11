@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -29,6 +30,10 @@
 #include "Rendering/ModelLoader.h"
 #include "Rendering/Framebuffer.h"
 #include "GlobalUtil.h"
+
+//NOTE: approximatively 0 to-do will be done bc i don't want to try to do a proper engine on this shitty codebase anymore, i'll just finish learnopengl.com tutorials and start anew lol
+// also, they are already notes by themselves like "hey, one day it'd be cool to implement subsurface scattering" "hey next time i'll build a proper logger early" etc etc
+// + i also have a bunch of notes on Discord
 
 //TODO: proper logger because logging takes so much time it's useful to be able to be able to partially turn it off quickly
 
@@ -133,33 +138,34 @@ int main()
     quad.SetEulerRotation(glm::vec3(-35.0f, 0.0f, 0.0f));
     quad.SetScale(glm::vec3(0.5f));
 
-    std::vector<Cube*> cubes = {
-        new Cube(glm::vec3(0.0f,  0.0f,  0.0f)),
-        new Cube(glm::vec3(2.0f,  5.0f, -15.0f)),
-        new Cube(glm::vec3(-1.5f, -2.2f, -2.5f)),
-        new Cube(glm::vec3(-3.8f, -2.0f, -12.3f)),
-        new Cube(glm::vec3(2.4f, -0.4f, -3.5f)),
-        new Cube(glm::vec3(-1.7f,  3.0f, -7.5f)),
-        new Cube(glm::vec3(1.3f, -2.0f, -2.5f)),
-        new Cube(glm::vec3(1.5f,  2.0f, -2.5f)),
-        new Cube(glm::vec3(1.5f,  0.2f, -1.5f)),
-        new Cube(glm::vec3(-1.3f,  1.0f, -1.5f)),
-        new Cube(glm::vec3(0.0f, 1.5f, 0.0f))
-    };
+    std::vector<std::unique_ptr<Cube>> cubes;
+    cubes.reserve(11);
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f,  0.0f,  0.0f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f,  5.0f, -15.0f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.5f, -2.2f, -2.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-3.8f, -2.0f, -12.3f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.4f, -0.4f, -3.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.7f,  3.0f, -7.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.3f, -2.0f, -2.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.5f,  2.0f, -2.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.5f,  0.2f, -1.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.3f,  1.0f, -1.5f)));
+    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f, 1.5f, 0.0f)));
 
-    // Try to set dynamic array for lights (maybe memory leaks bc when removed they are not freed lmao)
-    std::vector<LightSource*> lightsStack;
-    lightsStack.emplace_back(new GlobalLight(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new DirectionalLight(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new DirectionalLight(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new PointLight(glm::vec3(0.7f, 0.2f, 2.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new PointLight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new PointLight(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new PointLight(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new Spotlight(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new Spotlight(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(-0.3f, -0.3f, -0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new Spotlight(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.9f, -0.3f, 0.2f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
-    lightsStack.emplace_back(new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    // Dynamic array for lights
+    std::vector<std::unique_ptr<LightSource>> lightsList;
+    lightsList.reserve(11);
+    lightsList.emplace_back(std::make_unique<GlobalLight>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<DirectionalLight>(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<DirectionalLight>(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<PointLight>(glm::vec3(0.7f, 0.2f, 2.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<PointLight>(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<PointLight>(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<PointLight>(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<Spotlight>(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<Spotlight>(glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(-0.3f, -0.3f, -0.3f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<Spotlight>(glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.9f, -0.3f, 0.2f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
+    lightsList.emplace_back(std::make_unique<Flashlight>(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)));
 
     struct LightStruct {
         glm::vec4 position = glm::vec4(0.0f);
@@ -178,19 +184,21 @@ int main()
     };
     std::vector<LightStruct> lightsData;
 
+    size_t lightsBufferBaseSize = lightsList.size() * sizeof(LightStruct);
     GLuint ssbLocation = glGetProgramResourceIndex(basicLightingShader.GetHandlerID(), GL_SHADER_STORAGE_BLOCK, "u_LightsBuffer");
     unsigned int ssbBinding = 0;
     glShaderStorageBlockBinding(basicLightingShader.GetHandlerID(), ssbLocation, ssbBinding);
     unsigned int lightsSSBO;
     glGenBuffers(1, &lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
-    glBufferStorage(GL_SHADER_STORAGE_BUFFER, lightsStack.size() * sizeof(LightStruct), nullptr, GL_DYNAMIC_STORAGE_BIT);
+    // glBufferStorage(GL_SHADER_STORAGE_BUFFER, lightsBufferBaseSize, nullptr, GL_DYNAMIC_STORAGE_BIT); => immutable (so can't resize it)
+    glBufferData(GL_SHADER_STORAGE_BUFFER, lightsBufferBaseSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     //TODO: not sure about this shit lmao, surely there is a way to do it on the stack
     //Note: not used anymore (for now)(reason: test for infinite lights count)
-    LightSource* lights0[] = {
+    /*LightSource* lights0[] = {
         new GlobalLight(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
 
         new DirectionalLight(glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
@@ -206,8 +214,8 @@ int main()
         new Spotlight(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.9f, -0.3f, 0.2f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
 
         new Flashlight(&camera, glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f))
-    };
-    
+    };*/
+
     /* Cubemap tests */
     const std::string skyboxAssetsPath = "assets/textures/skybox/";
     unsigned int skyboxTexture;
@@ -313,14 +321,14 @@ int main()
     bool enableOutline = 0;
     glm::vec4 outlineColor(1.0f, 0.0f, 0.7f, 1.0f);
     int visualDebugMode = 0; // 0=none ; 1=depth buffer ; 2=normals
-    const char* visualDebugList[]{ "None", "Depth Buffer", "Normals" };
+    const char* const visualDebugList[]{ "None", "Depth Buffer", "Normals" };
 
     double lastTime = glfwGetTime();
     // Graphics settings for fps: [SET/UNLIMITED/VSYNC]
-    float fpsLimit = 60.0;
+    int fpsLimit = 60;
     double deltaTimeLimit = 1.0 / fpsLimit;
     bool unlimitedFPS = 0;
-    if (unlimitedFPS || fpsLimit != 60.0)
+    if (unlimitedFPS || fpsLimit != 60)
         appWindow.ToggleVsync(); // Toggle off V-Sync
 
     // Average fps
@@ -336,7 +344,7 @@ int main()
         /* Poll for and process events */
         glfwPollEvents();
 
-        if (glfwGetWindowAttrib(appWindow.GetWindowPointer(), GLFW_ICONIFIED) != 0)
+        if (glfwGetWindowAttrib((GLFWwindow*)appWindow.GetWindowPointer(), GLFW_ICONIFIED) != 0)
         {
             ImGui_ImplGlfw_Sleep(10);
             continue;
@@ -387,6 +395,7 @@ int main()
             glm::mat4 projection = camera.GetProj();
 
             if (CUSTOM_FB) fullscreenFb->Bind();
+            else glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight()); // bc framebuffer changes its own viewport when binding it
 
             /* Render */
 
@@ -430,44 +439,45 @@ int main()
             basicLightingShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
             basicLightingShader.SetUniform1i("u_VisualDebugMode", visualDebugMode);
             
-            lightsData.reserve(lightsStack.size());
+            lightsData.reserve(lightsList.size());
             //TODO: the Common interfaces thing could be removed with proper implementations i think.. (btw I read CPP casts are now faster that C-style ones on modern compiler so..)
-            int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
+            //int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for (unsigned int i = 0; i < lightsStack.size(); i++)
+            for(unsigned int i = 0; i < lightsList.size(); i++)
             {
-                LightSource* light = lightsStack[i];//lights[i];
-                if (!light->IsToggled()) continue;
+                LightSource* light = lightsList[i].get();//lights[i];
+                if(!light) continue;
+                if(!light->IsToggled()) continue;
 
-                std::string uniform;
+                //std::string uniform;
                 LightStruct data;
                 data.type = light->GetType();
                 data.ambient = glm::vec4(light->GetAmbientColor(), 0.0f);
                 data.diffuse = glm::vec4(light->GetDiffuseColor(), 0.0f);
                 data.specular = glm::vec4(light->GetSpecularColor(), 0.0f);
 
-                switch (light->GetType())
+                switch(light->GetType())
                 {
                     case LightType::GLOBAL:
                     {
                         GlobalLight* gl = static_cast<GlobalLight*>(light);
-                        uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
+                        //uniform = "u_GlobalLights[" + std::to_string(globalLightCount) + "]";
                         //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(gl)->GetPosition());
                         data.position = glm::vec4(static_cast<Common::HasPosition*>(gl)->GetPosition(), 0.0f);
-                        globalLightCount++;
+                        //globalLightCount++;
                     }   break;
                     case LightType::DIRECTIONAL:
                     {
                         DirectionalLight* dl = static_cast<DirectionalLight*>(light);
-                        uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
+                        //uniform = "u_DirectionalLights[" + std::to_string(directionalLightCount) + "]";
                         //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(dl)->GetDirection());
                         data.direction = glm::vec4(static_cast<Common::HasDirection*>(dl)->GetDirection(), 0.0f);
-                        directionalLightCount++;
+                        //directionalLightCount++;
                     }   break;
                     case LightType::POINT:
                     {
                         PointLight* pl = static_cast<PointLight*>(light);
-                        uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
+                        //uniform = "u_PointLights[" + std::to_string(pointLightCount) + "]";
                         //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(pl)->GetPosition());
                         //basicLightingShader.SetUniform1f(uniform + ".constant", pl->GetConstant());
                         //basicLightingShader.SetUniform1f(uniform + ".linear", pl->GetLinear());
@@ -476,12 +486,12 @@ int main()
                         data.constant = pl->GetConstant();
                         data.linear = pl->GetLinear();
                         data.quadratic = pl->GetQuadratic();
-                        pointLightCount++;
+                        //pointLightCount++;
                     }   break;
                     case LightType::SPOTLIGHT:
                     {
                         Spotlight* sl = static_cast<Spotlight*>(light);
-                        uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
+                        //uniform = "u_Spotlights[" + std::to_string(spotlightCount) + "]";
                         //basicLightingShader.SetUniformVec3f(uniform + ".position", static_cast<Common::HasPosition*>(sl)->GetPosition());
                         //basicLightingShader.SetUniformVec3f(uniform + ".direction", static_cast<Common::HasDirection*>(sl)->GetDirection());
                         //basicLightingShader.SetUniform1f(uniform + ".innerCutOff", sl->GetComputedInnerCutOff());
@@ -490,7 +500,7 @@ int main()
                         data.direction = glm::vec4(static_cast<Common::HasDirection*>(sl)->GetDirection(), 0.0f);
                         data.innerCutOff = sl->GetComputedInnerCutOff();
                         data.outerCutOff = sl->GetComputedOuterCutOff();
-                        spotlightCount++;
+                        //spotlightCount++;
                     }   break;
                     case LightType::FLASHLIGHT:
                     {
@@ -499,7 +509,7 @@ int main()
                         data.direction = glm::vec4(fl->GetDirection(), 0.0f);
                         data.innerCutOff = fl->GetComputedInnerCutOff();
                         data.outerCutOff = fl->GetComputedOuterCutOff();
-                        spotlightCount++;
+                        //spotlightCount++;
                     }   break;
                 }
                 //basicLightingShader.SetUniformVec3f(uniform + ".ambient", light->GetAmbientColor());
@@ -512,7 +522,12 @@ int main()
             if (lightsData.size() > 0)
             {
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, lightsData.size() * sizeof(LightStruct), &lightsData[0]);
+                size_t neededSize = lightsData.size() * sizeof(LightStruct);
+                if(neededSize>lightsBufferBaseSize) {
+                    glBufferData(GL_SHADER_STORAGE_BUFFER, neededSize, &lightsData[0], GL_DYNAMIC_READ);
+                    lightsBufferBaseSize = neededSize;
+                }
+                else glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, neededSize, &lightsData[0]);
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
             }
             lightsData.clear();
@@ -569,7 +584,8 @@ int main()
                 }
                 for (unsigned int i = 0; i < cubes.size(); i++)
                 {
-                    Cube* cube = cubes[i];
+                    Cube* cube = cubes[i].get();
+                    if(!cube) continue;
                     float angle = 20.0f * i;
                     cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                     model = cube->GetModelMatrix();
@@ -592,7 +608,8 @@ int main()
                     basicUnlitShader.SetUniformVec4f("u_DynamicColor", outlineColor);
                     for (unsigned int i = 0; i < cubes.size(); i++)
                     {
-                        Cube* cube = cubes[i];
+                        Cube* cube = cubes[i].get();
+                        if(!cube) continue;
                         float angle = 20.0f * i;
                         cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                         model = cube->GetModelMatrix();
@@ -612,10 +629,11 @@ int main()
             }
 
             //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-            for (unsigned int i = 0; i < lightsStack.size(); i++)
+            for(unsigned int i = 0; i < lightsList.size(); i++)
             {
-                LightSource* light = lightsStack[i];//lights[i];
-                if (light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
+                LightSource* light = lightsList[i].get();//lights[i];
+                if(!light) continue;
+                if(light->IsToggled()) light->DrawDebugCube(basicUnlitShader, view, projection);
             }
             basicUnlitShader.Unbind();
 
@@ -655,29 +673,29 @@ int main()
                 {
                     if (ImGui::Button("Add Light"))
                     {
-                        lightsStack.push_back(new PointLight(glm::vec3(0.0f), glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f)));
+                        lightsList.emplace_back(std::make_unique<PointLight>(glm::vec3(0.0f), glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f)));
                     }
                     ImGui::SameLine();
                     if (ImGui::Button("Remove Light"))
                     {
-                        if (selectedItem != -1 && selectedItem<lightsStack.size())
+                        if (selectedItem != -1 && selectedItem<lightsList.size())
                         {
-                            lightsStack.erase(lightsStack.begin() + selectedItem);
+                            lightsList.erase(lightsList.begin() + selectedItem);
                         }
                     }
                     ImGui::BeginTabBar("lightsseparator");
                     ImGui::EndTabBar();
                     //for (int i = 0; i < sizeof(lights) / sizeof(LightSource*); i++)
-                    for (unsigned int i = 0; i < lightsStack.size(); i++)
+                    for (unsigned int i = 0; i < lightsList.size(); i++)
                     {
-                        if (ImGui::Button((GetTypeString(/*lights*/lightsStack[i]->GetType()) + "Light " + std::to_string(i)).c_str()))
+                        if (ImGui::Button((GetTypeString(/*lights*/lightsList[i]->GetType()) + "Light " + std::to_string(i)).c_str()))
                         {
                             if (selectedItem == i) selectedItem = -1;
                             else selectedItem = i;
                         }
                         if (selectedItem == i)
                         {
-                            /*lights*/lightsStack[selectedItem]->ImGuiDebugDraw();
+                            /*lights*/lightsList[selectedItem]->ImGuiDebugDraw();
                         }
                     }
                     ImGui::EndTabItem();
@@ -686,7 +704,7 @@ int main()
                 {
                     if (ImGui::Button("Add Cube"))
                     {
-                        cubes.push_back(new Cube(glm::vec3(0.0f)));
+                        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f)));
                     }
                     ImGui::SameLine();
                     if (ImGui::Button("Remove Cube"))
@@ -707,7 +725,8 @@ int main()
                         }
                         if (selectedItem == i)
                         {
-                            Cube* cube = cubes[selectedItem];
+                            Cube* cube = cubes[selectedItem].get();
+                            if (!cube) continue;
                             glm::vec3 cubePos(cube->GetPosition());
                             glm::vec3 cubeRot(cube->GetEulerRotation());
                             glm::vec3 cubeScale(cube->GetScale());
@@ -741,7 +760,7 @@ int main()
                     if(!unlimitedFPS)
                     {
                         ImGui::SameLine();
-                        if(ImGui::SliderFloat("FPS limit", &fpsLimit, 0.0, 200.0)) deltaTimeLimit = 1.0 / fpsLimit;
+                        if(ImGui::SliderInt("FPS limit", &fpsLimit, 1.0, 200.0)) deltaTimeLimit = 1.0 / fpsLimit;
                     }
                 }
                 if (ImGui::ColorEdit3("ClearColor", &clearColor[0])) glClearColor(clearColor.r, clearColor.g, clearColor.b, 1.0f);
@@ -779,7 +798,7 @@ int main()
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             /* Swap front and back buffers */
-            glfwSwapBuffers(appWindow.GetWindowPointer());
+            glfwSwapBuffers((GLFWwindow*)appWindow.GetWindowPointer());
         }
     }
 }

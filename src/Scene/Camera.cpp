@@ -32,59 +32,8 @@ glm::mat4 LookAt(const glm::vec3& camPos, const glm::vec3& camTarget, const glm:
 
 void Camera::Update(const double deltaTime)
 {
-    // Mouse XY / Cam Yaw;Pitch
-    const glm::vec2 mousePos = Input::GetMousePos();
-    const double mouseX = mousePos.x;
-    const double mouseY = mousePos.y;
-    if (m_FirstCall)
-    {
-        m_LastMouseX = mouseX;
-        m_LastMouseY = mouseY;
-        m_FirstCall = 0;
-    }
-    const double offsetX = mouseX - m_LastMouseX;
-    const double offsetY = m_LastMouseY - mouseY;
-    m_LastMouseX = mouseX;
-    m_LastMouseY = mouseY;
-
-    if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
-    m_Yaw += offsetX * m_Sensitivity;
-    m_Pitch += offsetY * m_Sensitivity;
-
-    if (m_Pitch > 89.0f) m_Pitch = 89.0f;
-    if (m_Pitch < -89.0f) m_Pitch = -89.0f;
-
-    glm::vec3 camDir(
-        cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
-        sin(glm::radians(m_Pitch)),
-        sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch))
-    );
-    m_CamFront = glm::normalize(camDir);
-    m_CamRight = glm::normalize(glm::cross(m_CamFront, s_WorldUp));
-    m_CamUp = glm::normalize(glm::cross(m_CamRight, m_CamFront));
-
-    // Camera position
     const bool lShiftPressed = Input::isKeyDown(GLFW_KEY_LEFT_SHIFT);
-    float camSpeedH = m_HorizontalSpeed;
-    float camSpeedV = m_VerticalSpeed;
-    if (lShiftPressed)
-    {
-        camSpeedH *= 2;
-        camSpeedV *= 2;
-    }
-    camSpeedH *= deltaTime;
-    camSpeedV *= deltaTime;
-
-    if (Input::isKeyDown(GLFW_KEY_W)) m_CamPos += camSpeedH * m_CamFront;
-    if (Input::isKeyDown(GLFW_KEY_S)) m_CamPos -= camSpeedH * m_CamFront;
-    if (Input::isKeyDown(GLFW_KEY_A)) m_CamPos -= camSpeedH * m_CamRight;
-    if (Input::isKeyDown(GLFW_KEY_D)) m_CamPos += camSpeedH * m_CamRight;
-    if (Input::isKeyDown(GLFW_KEY_SPACE)) m_CamPos.y += camSpeedV;
-    if (Input::isKeyDown(GLFW_KEY_LEFT_CONTROL)) m_CamPos.y -= camSpeedV;
-
-    m_ViewMatrix = glm::lookAt(m_CamPos, m_CamPos + m_CamFront, m_CamUp);
-
-    // Camera settings
+    // Proj matrix
     if (Input::isKeyDown(GLFW_KEY_PAGE_UP))
     {
         if (lShiftPressed) m_Near += 0.1f;
@@ -106,4 +55,56 @@ void Camera::Update(const double deltaTime)
     if (m_FOV > 100.0f) m_FOV = 100.0f;
 
     m_ProjMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_Near, m_Far);
+
+    // Mouse XY/Offset
+    const auto [mouseX, mouseY] = Input::GetMousePos();
+    if (m_FirstCall)
+    {
+        m_LastMouseX = mouseX;
+        m_LastMouseY = mouseY;
+        m_FirstCall = 0;
+    }
+    const double offsetX = mouseX - m_LastMouseX;
+    const double offsetY = m_LastMouseY - mouseY;
+    m_LastMouseX = mouseX;
+    m_LastMouseY = mouseY;
+
+    // Don't move the camera around of not focused/if paused
+    if (!ApplicationWindow::Get().IsFocused() || ApplicationWindow::Get().IsPaused()) return;
+
+    // Yaw;Pitch
+    m_Yaw += offsetX * m_Sensitivity;
+    m_Pitch += offsetY * m_Sensitivity;
+
+    if (m_Pitch > 89.0f) m_Pitch = 89.0f;
+    if (m_Pitch < -89.0f) m_Pitch = -89.0f;
+
+    glm::vec3 camDir(
+        cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
+        sin(glm::radians(m_Pitch)),
+        sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch))
+    );
+    m_CamFront = glm::normalize(camDir);
+    m_CamRight = glm::normalize(glm::cross(m_CamFront, s_WorldUp));
+    m_CamUp = glm::normalize(glm::cross(m_CamRight, m_CamFront));
+
+    // Camera position
+    float camSpeedH = m_HorizontalSpeed;
+    float camSpeedV = m_VerticalSpeed;
+    if (lShiftPressed)
+    {
+        camSpeedH *= 2;
+        camSpeedV *= 2;
+    }
+    camSpeedH *= deltaTime;
+    camSpeedV *= deltaTime;
+
+    if (Input::isKeyDown(GLFW_KEY_W)) m_CamPos += camSpeedH * m_CamFront;
+    if (Input::isKeyDown(GLFW_KEY_S)) m_CamPos -= camSpeedH * m_CamFront;
+    if (Input::isKeyDown(GLFW_KEY_A)) m_CamPos -= camSpeedH * m_CamRight;
+    if (Input::isKeyDown(GLFW_KEY_D)) m_CamPos += camSpeedH * m_CamRight;
+    if (Input::isKeyDown(GLFW_KEY_SPACE)) m_CamPos.y += camSpeedV;
+    if (Input::isKeyDown(GLFW_KEY_LEFT_CONTROL)) m_CamPos.y -= camSpeedV;
+
+    m_ViewMatrix = glm::lookAt(m_CamPos, m_CamPos + m_CamFront, m_CamUp);
 }

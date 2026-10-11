@@ -15,8 +15,9 @@ ApplicationWindow::ApplicationWindow(const std::string& title, const int width, 
 {
     s_Instance = this;
 
-    if (!glfwInit())
-        return;
+    if (!glfwInit()) {
+        exit(EXIT_FAILURE);
+    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -26,18 +27,18 @@ ApplicationWindow::ApplicationWindow(const std::string& title, const int width, 
     glfwWindowHint(GLFW_SAMPLES, 0); // MSAA sample count for default window framebuffer
 
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow *window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(m_Width, m_Height, title.c_str(), NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return;
+        exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
+    if (!gladLoadGL(glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return;
+        exit(EXIT_FAILURE);
     }
 
 #ifdef DEBUG
@@ -52,7 +53,7 @@ ApplicationWindow::ApplicationWindow(const std::string& title, const int width, 
     }
 #endif
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, m_Width, m_Height);
     glfwSwapInterval(m_Vsync);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -95,6 +96,10 @@ ApplicationWindow::ApplicationWindow(const std::string& title, const int width, 
         }
     );
 
+    glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods){
+        ApplicationWindow* appWindow = static_cast<ApplicationWindow*>(glfwGetWindowUserPointer(window));
+        appWindow->KeyCallback(window, key, scancode, action, mods);
+    });
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -157,4 +162,8 @@ void ApplicationWindow::MouseButtonCallback(GLFWwindow* window, int button, int 
 void ApplicationWindow::WindowFocusCallback(GLFWwindow* window, const int focused)
 {
     m_Focused = focused == GL_TRUE;
+}
+
+void ApplicationWindow::KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+
 }

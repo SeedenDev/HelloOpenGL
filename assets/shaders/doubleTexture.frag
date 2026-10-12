@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 //TODO: remove when there'll be infinite texture layers support (maybe not infinite but like an array of 10 samplers?)
 out vec4 outColor;
 

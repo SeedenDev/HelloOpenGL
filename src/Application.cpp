@@ -47,6 +47,8 @@
 //TODO: remove this, testing purpose only
 #include <filesystem>
 
+#include "glm/gtc/type_ptr.hpp"
+
 int main()
 {
     const std::u8string workingDir = std::filesystem::current_path().u8string();
@@ -72,6 +74,9 @@ int main()
     int msaaMaxSample;
     glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &msaaMaxSample);
     std::cout << "MSAA max samples: " << std::to_string(msaaMaxSample) << std::endl;
+
+    // GL_MAX_VERTEX_UNIFORM_COMPONENTS not available with glad it's very strange. Seems like it has been hidden in an extension (https://github.com/floooh/sokol/issues/714) but i have OGL>4.1 tho
+    // std::cout << "max uniform count: " << std::endl;
 
     //TODO: everything below in a Renderer class or smth like that
     glEnable(GL_CULL_FACE);
@@ -196,7 +201,20 @@ int main()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbBinding, lightsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    //TODO: not sure about this shit lmao, surely there is a way to do it on the stack
+    // UBO tests
+    unsigned int ubo;
+    glGenBuffers(1, &ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBufferData(GL_UNIFORM_BUFFER, 4*4*4*2, nullptr, GL_DYNAMIC_DRAW); // mat4 is 4N per column, 4 column, so 4*4N, there is two of them. N=4bytes*
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // We would need to do this for each shader but OpenGL 4.2+ allows to set the binding in the shader uniform block so we don't need it here
+    // unsigned int uboIndex = glGetUniformBlockIndex(basicLightingShader.GetHandlerID(), "ViewProjMats");
+    // glUniformBlockBinding(basicLightingShader.GetHandlerID(), uboIndex);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
+    // could have used glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, offsetInTheBuffer, sizeInTheBuffer); to use one buffer form multiple different uniform blocks
+    //---------
+
+    //TODO: not sure about this shit lmao, surely there is a way to do it on the stack ==> pbby not btw, as a polymorphic class you can store derived classes as a plain "LightSource"
     //Note: not used anymore (for now)(reason: test for infinite lights count)
     /*LightSource* lights0[] = {
         new GlobalLight(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.8f), glm::vec3(0.5f)),
@@ -394,6 +412,11 @@ int main()
             glm::mat4 view = camera.GetView();
             glm::mat4 projection = camera.GetProj();
 
+            glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, glm::value_ptr(view));
+            glBufferSubData(GL_UNIFORM_BUFFER, 64, 64, glm::value_ptr(projection));
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
             if (CUSTOM_FB) fullscreenFb->Bind();
             else glViewport(0, 0, appWindow.GetWidth(), appWindow.GetHeight()); // bc framebuffer changes its own viewport when binding it
 
@@ -421,24 +444,24 @@ int main()
             // My eyes are bleeding with all of these duplicated lines but it'll be changed soon (it's just the Cube/Square implementation should be rewritten it's bad but idc for now)
             glm::mat4 model = quad.GetModelMatrix();
             glm::mat4 MVP = projection * view * model;
-            doubleTextureShader.SetUniformMat4f("u_View", view);
-            doubleTextureShader.SetUniformMat4f("u_Projection", projection);
+            // doubleTextureShader.SetUniformMat4f("u_View", view);
+            // doubleTextureShader.SetUniformMat4f("u_Projection", projection);
             doubleTextureShader.SetUniformMat4f("u_Model", model);
-            doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
+            // doubleTextureShader.SetUniformMat4f("u_MVP", MVP);
             doubleTextureShader.SetUniformVec4f("u_DynamicColor", quad.GetColor());
-            //quad.Draw();
+            quad.Draw();
             doubleTextureShader.Unbind();
 
             basicLightingShader.Bind();
-            basicLightingShader.SetUniformMat4f("u_View", view);
-            basicLightingShader.SetUniformMat4f("u_Projection", projection);
+            // basicLightingShader.SetUniformMat4f("u_View", view);
+            // basicLightingShader.SetUniformMat4f("u_Projection", projection);
             basicLightingShader.SetUniform1i("u_FogEnabled", enableFog);
             basicLightingShader.SetUniform1f("u_FogMin", fogMinDist);
             basicLightingShader.SetUniform1f("u_FogMax", fogMaxDist);
             basicLightingShader.SetUniform1f("u_Time", currentTime); // for emissive texture cool animation
             basicLightingShader.SetUniformVec3f("u_CameraPos", camera.GetPosition());
             basicLightingShader.SetUniform1i("u_VisualDebugMode", visualDebugMode);
-            
+
             lightsData.reserve(lightsList.size());
             //TODO: the Common interfaces thing could be removed with proper implementations i think.. (btw I read CPP casts are now faster that C-style ones on modern compiler so..)
             //int globalLightCount = 0, directionalLightCount = 0, pointLightCount = 0, spotlightCount = 0;
@@ -544,18 +567,18 @@ int main()
                 // model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
                 model = glm::scale(model, glm::vec3(1.0f));
                 // model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                MVP = projection * view * model;
+                // MVP = projection * view * model;
                 basicLightingShader.SetUniformMat4f("u_Model", model);
-                basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+                // basicLightingShader.SetUniformMat4f("u_MVP", MVP);
                 customModel.Draw(basicLightingShader);
 
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(0.0f, 3.0f, 0.0f));
                 model = glm::scale(model, glm::vec3(0.1f));
                 // model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                MVP = projection * view * model;
+                // MVP = projection * view * model;
                 basicLightingShader.SetUniformMat4f("u_Model", model);
-                basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+                // basicLightingShader.SetUniformMat4f("u_MVP", MVP);
                 backpackModel.Draw(basicLightingShader);
             }
             else
@@ -589,9 +612,9 @@ int main()
                     float angle = 20.0f * i;
                     cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                     model = cube->GetModelMatrix();
-                    MVP = projection * view * model;
+                    // MVP = projection * view * model;
                     basicLightingShader.SetUniformMat4f("u_Model", model);
-                    basicLightingShader.SetUniformMat4f("u_MVP", MVP);
+                    // basicLightingShader.SetUniformMat4f("u_MVP", MVP);
                     cube->Draw();
                 }
             }
@@ -614,9 +637,9 @@ int main()
                         cube->SetEulerRotation(glm::vec3(angle, angle * 0.3, angle * 0.5));
                         model = cube->GetModelMatrix();
                         model = glm::scale(model, glm::vec3(1.1f));
-                        MVP = projection * view * model;
+                        // MVP = projection * view * model;
                         basicUnlitShader.SetUniformMat4f("u_Model", model);
-                        basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
+                        // basicUnlitShader.SetUniformMat4f("u_MVP", MVP);
                         cube->Draw();
                     }
                     glDepthFunc(GL_LESS);
@@ -639,8 +662,8 @@ int main()
 
             glDepthFunc(GL_LEQUAL); //default GL_LESS
             skyboxShader.Bind();
-            skyboxShader.SetUniformMat4f("u_View", glm::mat4(glm::mat3(view)));
-            skyboxShader.SetUniformMat4f("u_Projection", projection);
+            // skyboxShader.SetUniformMat4f("u_View", glm::mat4(glm::mat3(view)));
+            // skyboxShader.SetUniformMat4f("u_Projection", projection);
             skyboxShader.SetUniform1i("u_Skybox", 25);
             skyboxVao.Bind();
             glDrawArrays(GL_TRIANGLES, 0, 36);

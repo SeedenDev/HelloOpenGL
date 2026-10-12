@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 layout(location = 0) in vec4 pos;
 //layout(location = 1) in vec4 color; // kept if needed later but for now: unused
@@ -9,11 +9,16 @@ out vec4 vertexColor;
 out vec2 vertexTex;
 
 uniform vec4 u_DynamicColor = vec4(1);
-uniform mat4 u_MVP;
+
+layout(std140, binding = 0) uniform ProjViewMatrices {
+    mat4 u_View;
+    mat4 u_Projection;
+};
+uniform mat4 u_Model;
 
 void main()
 {
     vertexColor = u_DynamicColor;
     vertexTex = tex;
-    gl_Position = u_MVP * pos;
+    gl_Position = u_Projection * u_View * u_Model * pos;
 }

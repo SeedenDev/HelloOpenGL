@@ -140,7 +140,7 @@ unsigned int Shader::CreateProgram(const std::string& vertexShaderPath, const st
     return shaderProgram;
 }
 
-//TODO: just cache all the uniform locations (w/name) on shader loading (+ check Uniform Buffer Object, seems a nice thing)
+//TODO: just cache all the uniform locations (w/name) on shader loading
 int Shader::GetUniformLocation(const std::string& name)
 {
     if (const auto x = m_UniformLocations.find(name); x != m_UniformLocations.end()) return x->second;
